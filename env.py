@@ -67,7 +67,7 @@ class Hex:
                 return (False, None)
             else:
                 for column_coord in bottom:
-                    connected[self.size].add((self.size, column_coord))
+                    connected[self.size-1].add((self.size-1, column_coord))
 
             # Top to down search
             for row in range(self.size//2-1):  # Range(0, 2)
@@ -91,12 +91,59 @@ class Hex:
                 if len(dummy_append_list) == 0:
                     return (False, None)
                 else:
-                    connected[row+1].update(dummy_append_list)
+                    connected[row-1].update(dummy_append_list)
 
             # Checking connectivity of the top and bottom trees
             for upper_coord in connected[self.size//2-1]:
                 for down_neighbour in uppertree_neighbour(upper_coord):
                     if down_neighbour in connected[self.size//2]:
+                        return (True, player)
+            return (False, None)
+
+        elif player == -1:
+            left = np.where(self.board[:, 0] == player)[0]
+            right = np.where(self.board[:, self.size-1] == player)[0]
+
+            if left.size == 0:
+                return (False, None)
+            else:
+                for row_coord in left:
+                    connected[0].add((row_coord, 0))
+
+            if right.size == 0:
+                return (False, None)
+            else:
+                for row_coord in right:
+                    connected[self.size-1].add((row_coord, self.size-1))
+
+            # Left to right
+            for column in range(self.size//2-1):  # Range(0, 2)
+                dummy_append_list = []
+                for coord in connected[column]:
+                    for right_neighbour in lefttree_neighbour(coord):
+                        if right_neighbour == player:
+                            dummy_append_list.append(right_neighbour)
+                if len(dummy_append_list) == 0:
+                    return (False, None)
+                else:
+                    connected[column+1].update(dummy_append_list)
+
+            # Right to left
+            for column in range(self.size-1, self.size//2, -1):  # Range(5, 3,-1)
+                dummy_append_list = []
+                for coord in connected[column]:
+                    for left_neighbour in righttree_neighbour(coord):
+                        if left_neighbour == player:
+                            dummy_append_list.append(left_neighbour)
+                if len(dummy_append_list) == 0:
+                    return (False, None)
+                else:
+                    connected[column-1].update(dummy_append_list)
+
+            # Checking connectivity of the left and right trees
+            for left_coord in connected[self.size//2-1]:
+                for right_neighbour in uppertree_neighbour(left_coord):
+                    if right_neighbour in connected[self.size//2]:
                         return (True, player)
             return (False, None)
 
