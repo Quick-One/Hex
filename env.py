@@ -1,5 +1,4 @@
 import random
-from collections import defaultdict
 
 import numpy as np
 
@@ -28,16 +27,20 @@ class Hex:
         self.size = size
         self.total_moves = 0
 
-    def IsTerminal(self) -> tuple:
+    def IsTerminal(self, p=None) -> tuple:
         """
         Returns if board state is terminal
         Possibly implement a DFS here
         Start from one edge (edge of the player who played last move) of the board
         Return a tuple ==> (boolean ( if game has ended ), winner)
+        param p: Checks for a specific player
         """
 
-        # The player whose win is to be checked
-        player = self.fetch_turn(inverse=True)
+        if p == None:
+            # The player whose win is to be checked
+            player = self.fetch_turn(inverse=True)
+        else:
+            player = p
 
         def fetch_neighbours(coords):
             x, y = coords
@@ -205,10 +208,13 @@ def generate_games(batchsize=100):
         game = Hex()
         while game.terminated == False:
             game.step()
-        print(game.winner)
         data.append(game.data_for_nn())
     return data
 
 
 if __name__ == "__main__":
     pass
+    # import time
+    # start_time = time.time()
+    # c = generate_games(batchsize=10000)
+    # print("--- %s seconds ---" % (time.time() - start_time))
