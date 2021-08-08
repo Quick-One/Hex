@@ -5,6 +5,10 @@ import numpy as np
 
 BOARD_SIZE = 6
 
+# Saving delta list since will be used many times
+# Excludes the top left and bottom right element
+delta_neighbouring_cell = [(-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0)]
+
 
 class Hex:
     """"
@@ -21,7 +25,8 @@ class Hex:
         self.terminated = False
         self.multi_agent = multi_agent
         self.winner = None
-        self.size == size
+        self.size = size
+        self.total_moves = 0
 
     def IsTerminal(self) -> tuple:
         """
@@ -30,122 +35,101 @@ class Hex:
         Start from one edge (edge of the player who played last move) of the board
         Return a tuple ==> (boolean ( if game has ended ), winner)
         """
-        if self.size % 2 == 1:
-            raise Exception('IsTerminal cannot handle odd board sizes yet')
+
         # The player whose win is to be checked
         player = self.fetch_turn(inverse=True)
 
-        def righttree_neighbour(index):
-            row, column = index
-            return [(row+1, column-1), (row, column-1)]
+        def fetch_neighbours(coords):
+            x, y = coords
+            neighbours = []
+            for delta_x, delta_y in delta_neighbouring_cell:
+                x_new = x + delta_x
+                y_new = y + delta_y
+                if (0 <= x_new <= self.size-1) and (0 <= y_new <= self.size-1) and self.board[x, y] == player:
+                    neighbours.append((x_new, y_new))
+            return neighbours
 
-        def lefttree_neighbour(index):
-            row, column = index
-            return [(row, column+1), (row-1, column+1)]
-
-        def uppertree_neighbour(index):
-            row, column = index
-            return [(row+1, column-1), (row+1, column)]
-
-        def lowertree_neighbour(index):
-            row, column = index
-            return [(row-1, column+1), (row-1, column)]
-
-        connected = defaultdict(set)
+        visited = set()
+        found = False
 
         if player == 1:
+
             top = np.where(self.board[0, :] == player)[0]
             bottom = np.where(self.board[(self.size-1), :] == player)[0]
 
-            if top.size == 0:
+            if (top.size == 0) or (bottom.size == 0):
                 return (False, None)
-            else:
-                for column_coord in top:
-                    connected[0].add((0, column_coord))
+            top_list = []
+            for column_coord in top:
+                top_list.append((0, column_coord))
 
-            if bottom.size == 0:
-                return (False, None)
-            else:
-                for column_coord in bottom:
-                    connected[self.size-1].add((self.size-1, column_coord))
+            def initialize_dfsv():
+                nonlocal visited
+                for intial_node in top_list:
+                    visited.add(intial_node)
+                    for neighbours in fetch_neighbours(intial_node):
+                        dfsv(neighbours)
 
-            # Top to down search
-            for row in range(self.size//2-1):  # Range(0, 2)
-                dummy_append_list = []
-                for coord in connected[row]:
-                    for down_neighbour in uppertree_neighbour(coord):
-                        if down_neighbour == player:
-                            dummy_append_list.append(down_neighbour)
-                if len(dummy_append_list) == 0:
-                    return (False, None)
+            def dfsv(node):
+                nonlocal visited
+                nonlocal found
+
+                if node in visited:
+                    return
                 else:
-                    connected[row+1].update(dummy_append_list)
+                    visited.add(node)
 
-            # Bottom to up search
-            for row in range(self.size-1, self.size//2, -1):  # Range(5, 3,-1)
-                dummy_append_list = []
-                for coord in connected[row]:
-                    for up_neighbour in lowertree_neighbour(coord):
-                        if up_neighbour == player:
-                            dummy_append_list.append(up_neighbour)
-                if len(dummy_append_list) == 0:
-                    return (False, None)
-                else:
-                    connected[row-1].update(dummy_append_list)
+                x, y = node
+                if x == self.size-1:
+                    found = True
 
-            # Checking connectivity of the top and bottom trees
-            for upper_coord in connected[self.size//2-1]:
-                for down_neighbour in uppertree_neighbour(upper_coord):
-                    if down_neighbour in connected[self.size//2]:
-                        return (True, player)
-            return (False, None)
+                for neighbour in fetch_neighbours(node):
+                    dfsv(neighbour)
+                return
+
+            initialize_dfsv()
+
+            return (found, player)
 
         elif player == -1:
+
             left = np.where(self.board[:, 0] == player)[0]
             right = np.where(self.board[:, self.size-1] == player)[0]
 
-            if left.size == 0:
+            if (left.size == 0) or (right.size == 0):
                 return (False, None)
-            else:
-                for row_coord in left:
-                    connected[0].add((row_coord, 0))
+            left_list = []
+            for row_coord in left:
+                left_list.append((row_coord, 0))
 
-            if right.size == 0:
-                return (False, None)
-            else:
-                for row_coord in right:
-                    connected[self.size-1].add((row_coord, self.size-1))
+            def initialize_dfsh():
+                nonlocal visited
+                for initial_node in left_list:
+                    visited.add(initial_node)
+                    neighbours = fetch_neighbours(initial_node)
+                    for neighbour in neighbours:
+                        dfsh(neighbour)
 
-            # Left to right
-            for column in range(self.size//2-1):  # Range(0, 2)
-                dummy_append_list = []
-                for coord in connected[column]:
-                    for right_neighbour in lefttree_neighbour(coord):
-                        if right_neighbour == player:
-                            dummy_append_list.append(right_neighbour)
-                if len(dummy_append_list) == 0:
-                    return (False, None)
+            def dfsh(node):
+                nonlocal visited
+                nonlocal found
+
+                if node in visited:
+                    return
                 else:
-                    connected[column+1].update(dummy_append_list)
+                    visited.add(node)
 
-            # Right to left
-            for column in range(self.size-1, self.size//2, -1):  # Range(5, 3,-1)
-                dummy_append_list = []
-                for coord in connected[column]:
-                    for left_neighbour in righttree_neighbour(coord):
-                        if left_neighbour == player:
-                            dummy_append_list.append(left_neighbour)
-                if len(dummy_append_list) == 0:
-                    return (False, None)
-                else:
-                    connected[column-1].update(dummy_append_list)
+                x, y = node
+                if y == self.size-1:
+                    found = True
+                neighbours = fetch_neighbours(node)
+                for neighbour in neighbours:
+                    dfsh(neighbour)
+                return
 
-            # Checking connectivity of the left and right trees
-            for left_coord in connected[self.size//2-1]:
-                for right_neighbour in uppertree_neighbour(left_coord):
-                    if right_neighbour in connected[self.size//2]:
-                        return (True, player)
-            return (False, None)
+            initialize_dfsh()
+
+            return (found, player)
 
     def fetch_turn(self, inverse=False) -> int:
         """" 
@@ -179,8 +163,10 @@ class Hex:
         '''
         board_state_copy = self.board.copy()
         self.history.append(board_state_copy)
+        self.total_moves += 1
 
         boolean, winner = self.IsTerminal()
+
         if boolean:
             self.terminated = True
             self.winner = winner
@@ -196,7 +182,6 @@ class Hex:
         '''
         # finding where element is 0
         row_coords, column_coords = np.where(self.board == 0)
-        print(row_coords, column_coords)
         possible_actions = []
         for n in range(len(row_coords)):
             possible_actions.append((row_coords[n], column_coords[n]))
@@ -220,12 +205,10 @@ def generate_games(batchsize=100):
         game = Hex()
         while game.terminated == False:
             game.step()
+        print(game.winner)
         data.append(game.data_for_nn())
+    return data
 
 
 if __name__ == "__main__":
     pass
-    # game = Hex()
-    # print(game.board)
-    # game.board[1, 1] = 1
-    # print(game.possible_actions())
