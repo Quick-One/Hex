@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 
+import cProfile
+
 BOARD_SIZE = 6
 
 # Saving delta list since will be used many times
@@ -151,7 +153,7 @@ class Hex:
             return (turn * -1)
         return turn
 
-    def step(self):
+    def step(self, agent_move = None):
         '''
         Emulates a move on the board.
         In case of multi_agent add another argument for Neural network to determine the next step
@@ -164,19 +166,29 @@ class Hex:
             self.terminated = True
             self.winner = winner
         '''
-        board_state_copy = self.board.copy()
-        self.history.append(board_state_copy)
-        self.total_moves += 1
-
-        boolean, winner = self.IsTerminal()
-
-        if boolean:
-            self.terminated = True
-            self.winner = winner
+        
+        
+        if self.terminated == True:
+            print('Shouldnt come here')
+        
         else:
-            player = self.fetch_turn()
-            action = random.choice(self.possible_actions())
-            self.board[action] = player
+            board_state_copy = self.board.copy()
+            self.history.append(board_state_copy)
+            self.total_moves += 1
+            
+            if agent_move == None:
+                player = self.fetch_turn()
+                action = random.choice(self.possible_actions())
+                self.board[action] = player
+                
+                boolean, winner = self.IsTerminal()
+                
+                if boolean:
+                    self.terminated = True
+                    self.winner = winner
+                    self.history.append(self.board)
+                    
+
 
     def possible_actions(self) -> list:
         '''
@@ -214,7 +226,12 @@ def generate_games(batchsize=100):
 
 if __name__ == "__main__":
     pass
-    # import time
-    # start_time = time.time()
-    # c = generate_games(batchsize=10000)
-    # print("--- %s seconds ---" % (time.time() - start_time))
+
+    # from pycallgraph import PyCallGraph
+    # from pycallgraph.output import GraphvizOutput
+
+    # with PyCallGraph(output=GraphvizOutput()):
+    #     c = generate_games(batchsize=100)
+
+    
+        
