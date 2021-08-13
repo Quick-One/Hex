@@ -2,13 +2,15 @@ import random
 
 import numpy as np
 
-import cProfile
-
 BOARD_SIZE = 6
 
 # Saving delta list since will be used many times
 # Excludes the top left and bottom right element
 delta_neighbouring_cell = [(-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0)]
+
+
+class DFScomplete(Exception):
+    pass
 
 
 class Hex:
@@ -59,11 +61,12 @@ class Hex:
 
         if player == 1:
 
-            top = np.where(self.board[0, :] == player)[0]
-            bottom = np.where(self.board[(self.size-1), :] == player)[0]
+            for row in self.board:
+                if player not in row:
+                    return (False, None)
 
-            if (top.size == 0) or (bottom.size == 0):
-                return (False, None)
+            top = np.where(self.board[0, :] == player)[0]
+
             top_list = []
             for column_coord in top:
                 top_list.append((0, column_coord))
@@ -87,22 +90,27 @@ class Hex:
                 x, y = node
                 if x == self.size-1:
                     found = True
+                    raise DFScomplete
 
                 for neighbour in fetch_neighbours(node):
                     dfsv(neighbour)
                 return
-
-            initialize_dfsv()
+            try:
+                initialize_dfsv()
+            except DFScomplete:
+                pass
 
             return (found, player)
 
         elif player == -1:
 
-            left = np.where(self.board[:, 0] == player)[0]
-            right = np.where(self.board[:, self.size-1] == player)[0]
+            for index in range(self.size):
+                coulumn = self.board[:, index]
+                if player not in coulumn:
+                    return (False, None)
 
-            if (left.size == 0) or (right.size == 0):
-                return (False, None)
+            left = np.where(self.board[:, 0] == player)[0]
+
             left_list = []
             for row_coord in left:
                 left_list.append((row_coord, 0))
@@ -127,12 +135,16 @@ class Hex:
                 x, y = node
                 if y == self.size-1:
                     found = True
+                    raise DFScomplete
                 neighbours = fetch_neighbours(node)
                 for neighbour in neighbours:
                     dfsh(neighbour)
                 return
 
-            initialize_dfsh()
+            try:
+                initialize_dfsh()
+            except DFScomplete:
+                pass
 
             return (found, player)
 
@@ -153,7 +165,7 @@ class Hex:
             return (turn * -1)
         return turn
 
-    def step(self, agent_move = None):
+    def step(self, agent_move=None):
         '''
         Emulates a move on the board.
         In case of multi_agent add another argument for Neural network to determine the next step
@@ -166,29 +178,26 @@ class Hex:
             self.terminated = True
             self.winner = winner
         '''
-        
-        
+
         if self.terminated == True:
             print('Shouldnt come here')
-        
+
         else:
             board_state_copy = self.board.copy()
             self.history.append(board_state_copy)
             self.total_moves += 1
-            
+
             if agent_move == None:
                 player = self.fetch_turn()
                 action = random.choice(self.possible_actions())
                 self.board[action] = player
-                
+
                 boolean, winner = self.IsTerminal()
-                
+
                 if boolean:
                     self.terminated = True
                     self.winner = winner
                     self.history.append(self.board)
-                    
-
 
     def possible_actions(self) -> list:
         '''
@@ -232,6 +241,3 @@ if __name__ == "__main__":
 
     # with PyCallGraph(output=GraphvizOutput()):
     #     c = generate_games(batchsize=100)
-
-    
-        
