@@ -192,9 +192,10 @@ class Hex:
                 action = random.choice(self.possible_actions())
                 self.board[action] = player
 
-                boolean, winner = self.IsTerminal()
+                iswin, winner = self.IsTerminal()
 
-                if boolean:
+                if iswin:
+                    print(self.board)
                     self.terminated = True
                     self.winner = winner
                     self.history.append(self.board)
@@ -240,4 +241,4 @@ if __name__ == "__main__":
     # from pycallgraph.output import GraphvizOutput
 
     # with PyCallGraph(output=GraphvizOutput()):
-    #     c = generate_games(batchsize=100)
+    c = generate_games(batchsize=100)
