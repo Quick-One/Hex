@@ -1,19 +1,12 @@
+import cProfile
 import random
 
 import numpy as np
 
 from c_isterminal import c_IsTerminal
+from Hex_utils import visualize_board
 
-import cProfile
 BOARD_SIZE = 6
-
-# Saving delta list since will be used many times
-# Excludes the top left and bottom right element
-delta_neighbouring_cell = [(-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0)]
-
-
-class DFScomplete(Exception):
-    pass
 
 
 class Hex:
@@ -83,7 +76,7 @@ class Hex:
         '''
 
         if self.terminated == True:
-            print('Shouldnt come here')
+            raise Exception('Shouldnt come to step when game is terminated')
 
         else:
             board_state_copy = self.board.copy()
@@ -98,7 +91,6 @@ class Hex:
                 iswin, winner = self.IsTerminal()
 
                 if iswin:
-                    print(self.board)
                     self.terminated = True
                     self.winner = winner
                     self.history.append(self.board)
@@ -139,9 +131,5 @@ def generate_games(batchsize=100):
 
 if __name__ == "__main__":
     pass
-
-    # from pycallgraph import PyCallGraph
-    # from pycallgraph.output import GraphvizOutput
-
-    # with PyCallGraph(output=GraphvizOutput()):
-    cProfile.run('c = generate_games(batchsize=100)')
+    # c = generate_games(batchsize=10)
+    # cProfile.run( 'c = generate_games(batchsize=1000)')

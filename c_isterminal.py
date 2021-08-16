@@ -1,6 +1,5 @@
 import numpy as np
-
-# Working code 
+# Working code
 # Convert c_isterminal.py logic to c
 # Changes have been made to env.py so as to accomodate the usage of this file
 # Refer to line 37 and line 52 of env.py
@@ -11,7 +10,7 @@ import numpy as np
 
 # Saving delta list since will be used many times
 # Excludes the top left and bottom right element
-delta_neighbouring_cell = [(-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0)]
+delta_neighbouring_cell = [(-1, 0), (-1, -1), (0, -1), (0, 1), (1, 1), (1, 0)]
 
 
 class Stack:
@@ -36,7 +35,7 @@ def fetch_neighbours(coords: tuple, player: int, size: int, board: np.ndarray):
     for delta_x, delta_y in delta_neighbouring_cell:
         x_new = x + delta_x
         y_new = y + delta_y
-        if (0 <= x_new <= size-1) and (0 <= y_new <= size-1) and board[x, y] == player:
+        if (0 <= x_new <= size-1) and (0 <= y_new <= size-1) and board[x_new, y_new] == player:
             neighbours.append((x_new, y_new))
     return neighbours
 
