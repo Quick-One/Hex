@@ -95,9 +95,10 @@ class Hex:
                 action = random.choice(self.possible_actions())
                 self.board[action] = player
 
-                boolean, winner = self.IsTerminal()
+                iswin, winner = self.IsTerminal()
 
-                if boolean:
+                if iswin:
+                    print(self.board)
                     self.terminated = True
                     self.winner = winner
                     self.history.append(self.board)
