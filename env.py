@@ -2,6 +2,9 @@ import random
 
 import numpy as np
 
+from c_isterminal import c_IsTerminal
+
+import cProfile
 BOARD_SIZE = 6
 
 # Saving delta list since will be used many times
@@ -46,107 +49,7 @@ class Hex:
         else:
             player = p
 
-        def fetch_neighbours(coords):
-            x, y = coords
-            neighbours = []
-            for delta_x, delta_y in delta_neighbouring_cell:
-                x_new = x + delta_x
-                y_new = y + delta_y
-                if (0 <= x_new <= self.size-1) and (0 <= y_new <= self.size-1) and self.board[x, y] == player:
-                    neighbours.append((x_new, y_new))
-            return neighbours
-
-        visited = set()
-        found = False
-
-        if player == 1:
-
-            for row in self.board:
-                if player not in row:
-                    return (False, None)
-
-            top = np.where(self.board[0, :] == player)[0]
-
-            top_list = []
-            for column_coord in top:
-                top_list.append((0, column_coord))
-
-            def initialize_dfsv():
-                nonlocal visited
-                for intial_node in top_list:
-                    visited.add(intial_node)
-                    for neighbours in fetch_neighbours(intial_node):
-                        dfsv(neighbours)
-
-            def dfsv(node):
-                nonlocal visited
-                nonlocal found
-
-                if node in visited:
-                    return
-                else:
-                    visited.add(node)
-
-                x, y = node
-                if x == self.size-1:
-                    found = True
-                    raise DFScomplete
-
-                for neighbour in fetch_neighbours(node):
-                    dfsv(neighbour)
-                return
-            try:
-                initialize_dfsv()
-            except DFScomplete:
-                pass
-
-            return (found, player)
-
-        elif player == -1:
-
-            for index in range(self.size):
-                coulumn = self.board[:, index]
-                if player not in coulumn:
-                    return (False, None)
-
-            left = np.where(self.board[:, 0] == player)[0]
-
-            left_list = []
-            for row_coord in left:
-                left_list.append((row_coord, 0))
-
-            def initialize_dfsh():
-                nonlocal visited
-                for initial_node in left_list:
-                    visited.add(initial_node)
-                    neighbours = fetch_neighbours(initial_node)
-                    for neighbour in neighbours:
-                        dfsh(neighbour)
-
-            def dfsh(node):
-                nonlocal visited
-                nonlocal found
-
-                if node in visited:
-                    return
-                else:
-                    visited.add(node)
-
-                x, y = node
-                if y == self.size-1:
-                    found = True
-                    raise DFScomplete
-                neighbours = fetch_neighbours(node)
-                for neighbour in neighbours:
-                    dfsh(neighbour)
-                return
-
-            try:
-                initialize_dfsh()
-            except DFScomplete:
-                pass
-
-            return (found, player)
+        return c_IsTerminal(self.board, self.size, player)
 
     def fetch_turn(self, inverse=False) -> int:
         """" 
@@ -240,4 +143,4 @@ if __name__ == "__main__":
     # from pycallgraph.output import GraphvizOutput
 
     # with PyCallGraph(output=GraphvizOutput()):
-    #     c = generate_games(batchsize=100)
+    cProfile.run('c = generate_games(batchsize=100)')
