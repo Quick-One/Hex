@@ -30,6 +30,7 @@ class Hex:
         self.winner = None
         self.size = size
         self.total_moves = 0
+        self.move_history = []
 
     def IsTerminal(self, p=None) -> tuple:
         """
@@ -191,6 +192,7 @@ class Hex:
                 player = self.fetch_turn()
                 action = random.choice(self.possible_actions())
                 self.board[action] = player
+                self.move_history.append(action)
 
                 iswin, winner = self.IsTerminal()
 
@@ -236,9 +238,3 @@ def generate_games(batchsize=100):
 
 if __name__ == "__main__":
     pass
-
-    # from pycallgraph import PyCallGraph
-    # from pycallgraph.output import GraphvizOutput
-
-    # with PyCallGraph(output=GraphvizOutput()):
-    c = generate_games(batchsize=100)
