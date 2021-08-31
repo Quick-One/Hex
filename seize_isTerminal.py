@@ -1,6 +1,6 @@
 from Hex_utils import visualize_board
 import numpy as np
-delta_neighbouring_cell = [(-1, 0), (-1, -1), (0, -1), (0, 1), (1, 1), (1, 0)]
+delta_neighbouring_cell = [(-1, 0), (-1, +1), (0, -1), (0, 1), (1, -1), (1, 0)]
 
 
 class Stack:

@@ -76,13 +76,11 @@ if __name__ == '__main__':
                             (2, 4, 2), (4, 2, 2), (2, 4, 3), (4, 2, 3),
                             (3, 3, 3), (3, 3, 2),
                             (4, 3, 3), (3, 4, 3),
-                            (4, 4, 2), (4, 4, 3), (4, 4, 4),
-                            (5, 5, 2)]
+                            (4, 4, 2), (4, 4, 3), (4, 4, 4)]
 
     filters_found = []
 
     for query in patterns_search_list:
-
         size_x, size_y, n_pieces = query
         empty_board = np.zeros((size_x, size_y), int)
         cnt_pattern = 0
@@ -121,8 +119,9 @@ if __name__ == '__main__':
 
             # if filter is not present in the filter_found
             if filter_check(board, intrusion_zone, filters_found):
+                
                 filters_found.append(
                     (board, intrusion_zone, state_value_memory))
 
-    with open('filters.pickle', 'wb') as handle:
-        pickle.dump(filters_found, handle)
+    # with open('filters.pickle', 'wb') as handle:
+    #     pickle.dump(filters_found, handle)
