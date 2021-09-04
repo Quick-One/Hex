@@ -4,9 +4,9 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
-radius = 1
-iplusj_multiplier = radius * 1.5
-jminusi_multiplier = radius * np.sqrt(3)/2
+circumradius = 1
+iplusj_multiplier = circumradius * 1.5
+jminusi_multiplier = circumradius * np.sqrt(3)/2
 piby6 = np.pi/6
 
 
@@ -63,14 +63,14 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
 
         # ADD OUTLINE
         if filter is None:
-            hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=radius,
+            hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=circumradius,
                                      facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=piby6)
         else:
             if filter[i, j]:
-                hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=radius,
+                hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=circumradius,
                                          facecolor='0.85', edgecolor='darkgrey', linewidth='1.5', orientation=piby6)
             else:
-                hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=radius,
+                hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=circumradius,
                                          facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=piby6)
 
         ax.add_patch(hexagon)
@@ -95,7 +95,7 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
             elif piece == -1:
                 color = 'k'
             plt.text(coord_x, coord_y, str(move_number), ha='center',
-                     va='center', size=17, fontfamily='Comic Sans MS', color=color)
+                     va='center', size=12, fontfamily='Comic Sans MS', color=color)
 
     plt.axis('off')
     plt.autoscale(enable=True)
@@ -113,4 +113,4 @@ if __name__ == '__main__':
     board[0][1] = -1
     board[1][2] = 1
     order = [(0, 0), (0, 1), (1, 2)]
-    visualize_board(board, order)
+    visualize_board(board,order)

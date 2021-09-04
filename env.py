@@ -62,7 +62,7 @@ class Hex:
             return (turn * -1)
         return turn
 
-    def step(self, agent_move=None):
+    def step(self, agent_move: tuple = None):
         '''
         Emulates a move on the board.
         In case of multi_agent add another argument for Neural network to determine the next step
@@ -84,17 +84,19 @@ class Hex:
             self.total_moves += 1
 
             if agent_move == None:
-                player = self.fetch_turn()
                 action = random.choice(self.possible_actions())
-                self.board[action] = player
-                self.move_history.append(action)
+            else:
+                action = agent_move
+            player = self.fetch_turn()
+            self.board[action] = player
+            self.move_history.append(action)
 
-                iswin, winner = self.IsTerminal()
+            iswin, winner = self.IsTerminal()
 
-                if iswin:
-                    self.terminated = True
-                    self.winner = winner
-                    self.history.append(self.board)
+            if iswin:
+                self.terminated = True
+                self.winner = winner
+                self.history.append(self.board)
 
     def possible_actions(self) -> list:
         '''
