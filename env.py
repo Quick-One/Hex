@@ -2,6 +2,7 @@ import cProfile
 import random
 
 import numpy as np
+from string import ascii_letters
 
 from hex_isterminal import hex_IsTerminal
 from Hex_utils import visualize_board
@@ -17,6 +18,7 @@ class Hex:
     Denote Black in board as '1'
     White as '-1', empty cells as '0'
     """
+    color_dict = {1: 'Black', -1: 'White'}
 
     def __init__(self, size=BOARD_SIZE, multi_agent=False):
         self.board = np.zeros((size, size), np.int8)
@@ -109,6 +111,11 @@ class Hex:
         for n in range(len(row_coords)):
             possible_actions.append((row_coords[n], column_coords[n]))
         return possible_actions
+
+    @staticmethod
+    def move_to_string(move: tuple) -> str:
+        i, j = move
+        return f"{ascii_letters[j]}{i+1}"
 
     def data_for_nn(self):
         '''

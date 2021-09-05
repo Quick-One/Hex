@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon, Circle, Polygon
 import numpy as np
+from string import ascii_letters
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -23,7 +24,6 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
     for i, j in ((x, y) for x in range(size_row) for y in range(size_column)):
         coords[i, j] = get_coords((i, j))
 
-    
     # Creating a 2D array containing move order
     if moves_order != None:
         move_matrix = np.zeros((size_row, size_column), int)
@@ -32,8 +32,7 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
 
     ax = plt.axes()
     ax.set_aspect('equal')
-    
-    
+
     L = coords[0, 0]
     R = coords[size_row-1, size_column-1]
     U = coords[0, size_column-1]
@@ -46,16 +45,29 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
     R_offset = (R[0] + OFFSET, R[1])
     U_offset = (U[0], L_offset[1] + M1*(U[0] - L_offset[0]))
     D_offset = (D[0], L_offset[1] + M2*(D[0] - L_offset[0]))
-   
-    triangleNW = Polygon([L_offset, U_offset, MID], closed = True, color = 'k')
-    triangleNE = Polygon([R_offset, U_offset, MID], closed = True, color = '0.90')
-    triangleSW = Polygon([L_offset, D_offset, MID], closed = True, color = '0.90')
-    triangleSE = Polygon([R_offset, D_offset, MID], closed = True, color = 'k')
+
+    triangleNW = Polygon([L_offset, U_offset, MID], closed=True, color='k')
+    triangleNE = Polygon([R_offset, U_offset, MID], closed=True, color='0.90')
+    triangleSW = Polygon([L_offset, D_offset, MID], closed=True, color='0.90')
+    triangleSE = Polygon([R_offset, D_offset, MID], closed=True, color='k')
     ax.add_patch(triangleNW)
     ax.add_patch(triangleNE)
     ax.add_patch(triangleSW)
     ax.add_patch(triangleSE)
-    
+
+    LABEL_OFFSET = 0.7
+    label_alpha = [get_coords((-1, j)) for j in range(size_column)]
+    label_numeric = [get_coords((i, -1)) for i in range(size_row)]
+    for num, coord in enumerate(label_alpha, 1):
+
+        x_coord, y_coord = coord
+        ax.text(x_coord - LABEL_OFFSET, y_coord - LABEL_OFFSET * M2, ascii_letters[num-1], ha='center',
+                va='center', size=10, color='k', family='sans-serif', weight='light')
+    for num, coord in enumerate(label_numeric, 1):
+
+        x_coord, y_coord = coord
+        ax.text(x_coord - LABEL_OFFSET, y_coord - LABEL_OFFSET * M1, str(num), ha='center',
+                va='center', size=10, color='k', family='sans-serif', weight='light')
 
     for i, j in ((x, y) for x in range(size_row) for y in range(size_column)):
         coord_x, coord_y = coords[i, j]
@@ -113,4 +125,4 @@ if __name__ == '__main__':
     board[0][1] = -1
     board[1][2] = 1
     order = [(0, 0), (0, 1), (1, 2)]
-    visualize_board(board,order)
+    visualize_board(board, order)

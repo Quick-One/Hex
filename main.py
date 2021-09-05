@@ -1,158 +1,265 @@
+from string import ascii_letters
+
 import matplotlib.pyplot as plt
-from matplotlib.patches import RegularPolygon, Circle, Polygon
 import numpy as np
-from env import Hex
-import warnings
+from matplotlib.patches import Circle, Polygon, RegularPolygon
+
 import agent
-import time
-warnings.filterwarnings("ignore")
-
-class CustomException(Exception):
-    pass
-
-CIRCUMRADIUS = 1
-INRADIUS = 0.6
-SIZE = 6
-iplusj_multiplier = CIRCUMRADIUS * 1.5
-jminusi_multiplier = CIRCUMRADIUS * np.sqrt(3)/2
-piby6 = np.pi/6
-
-fig, ax = plt.subplots()
-ax.axis('off')
-ax.autoscale(enable=True)
-ax.set_aspect('equal')
-fig.suptitle('Different types of oscillations', fontsize=16)
-ax.set_title('Test')
-
-board = np.zeros((SIZE, SIZE), int)
-size_row, size_column = board.shape
-coords = np.zeros((size_row, size_column), dtype=object)
+from env import Hex
 
 
-def get_coords(index: tuple) -> tuple:
-    '''
-    Return the (x,y) coordinates of the centre of hexagon for an index of 2D array
-    '''
-    i, j = index
-    return ((i+j)*iplusj_multiplier, (j-i)*jminusi_multiplier)
+class GUI():
 
+    def __init__(self, game: Hex, player1: str, player2: str, CIRCUMRADIUS: int = 1, INRADIUS: int = 0.6, BOARD_OFFSET: int = 3, LABEL_OFFSET: int = 0.7):
+        self.game = game
+        self.board_size = game.size
+        self.fig, self.ax = plt.subplots()
+        self.ax.axis('off')
+        self.ax.autoscale(enable=True)
+        self.ax.set_aspect('equal')
+        self.player1 = player1
+        self.player2 = player2
+        self.coords = np.zeros(
+            (self.board_size, self.board_size), dtype=object)
+        self.CIRCUMRADIUS = CIRCUMRADIUS
+        self.hexagonal_tiles = np.zeros(
+            (self.board_size, self.board_size), dtype=object)
+        self.pieces = np.zeros(
+            (self.board_size, self.board_size), dtype=object)
+        self.INRADIUS = INRADIUS
+        self.BOARD_OFFSET = BOARD_OFFSET
+        self.LABEL_OFFSET = LABEL_OFFSET
 
-# Generate the coordinates of centres of the isometric grid
-for i, j in ((x, y) for x in range(size_row) for y in range(size_column)):
-    coords[i, j] = get_coords((i, j))
+    def show(self) -> None:
+        '''
+        Shows the main GUI window.
+        '''
+        self.fig.show()
 
+    def refresh(self):
+        '''
+        Refreshes the GUI window.
+        '''
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
-# Adding the four triangles
-OFFSET = 3
-L = coords[0, 0]
-R = coords[size_row-1, size_column-1]
-U = coords[0, size_column-1]
-D = coords[size_row-1, 0]
-MID = ((L[0]+R[0])/2, (L[1]+R[1])/2)
-M1 = (coords[0, 1][1]-coords[0, 0])[1]/coords[0, 1][0]-coords[0, 0][0]
-M2 = (coords[1, 0][1]-coords[0, 0])[1]/coords[1, 0][0]-coords[0, 0][0]
+    def get_coords(self, index: tuple) -> tuple:
+        '''
+        Return coordinates of the centre of hexagonal tile on the XY plane for an index on board.
+        '''
+        i, j = index
+        iplusj_multiplier = self.CIRCUMRADIUS * 1.5
+        jminusi_multiplier = self.CIRCUMRADIUS * np.sqrt(3)/2
+        return ((i+j)*iplusj_multiplier, (j-i)*jminusi_multiplier)
 
-L_offset = (L[0] - OFFSET, L[1])
-R_offset = (R[0] + OFFSET, R[1])
-U_offset = (U[0], L_offset[1] + M1*(U[0] - L_offset[0]))
-D_offset = (D[0], L_offset[1] + M2*(D[0] - L_offset[0]))
+    def render_coords(self) -> None:
+        '''
+        Generate the coordinates for the centres of the each tile on the board.
+        '''
+        for i, j in ((x, y) for x in range(self.board_size) for y in range(self.board_size)):
+            self.coords[i, j] = self.get_coords((i, j))
 
-triangleNW = Polygon([L_offset, U_offset, MID], closed=True, color='k')
-triangleNE = Polygon([R_offset, U_offset, MID], closed=True, color='0.90')
-triangleSW = Polygon([L_offset, D_offset, MID], closed=True, color='0.90')
-triangleSE = Polygon([R_offset, D_offset, MID], closed=True, color='k')
-ax.add_patch(triangleNW)
-ax.add_patch(triangleNE)
-ax.add_patch(triangleSW)
-ax.add_patch(triangleSE)
-fig.show()
+    def render_board(self) -> None:
+        '''
+        Generates the main board layout by forming the 4 main triangles to demarcate the colors.
+        '''
+        L = self.coords[0, 0]
+        R = self.coords[self.board_size-1, self.board_size-1]
+        U = self.coords[0, self.board_size-1]
+        D = self.coords[self.board_size-1, 0]
 
+        M1 = (self.coords[0, 1][1]-self.coords[0, 0])[1] / \
+            self.coords[0, 1][0]-self.coords[0, 0][0]
+        M2 = (self.coords[1, 0][1]-self.coords[0, 0])[1] / \
+            self.coords[1, 0][0]-self.coords[0, 0][0]
 
+        L_offset = (L[0] - self.BOARD_OFFSET, L[1])
+        R_offset = (R[0] + self.BOARD_OFFSET, R[1])
+        U_offset = (U[0], L_offset[1] + M1*(U[0] - L_offset[0]))
+        D_offset = (D[0], L_offset[1] + M2*(D[0] - L_offset[0]))
+        MID = ((L[0]+R[0])/2, (L[1]+R[1])/2)
 
-for i, j in ((x, y) for x in range(size_row) for y in range(size_column)):
-    coord_x, coord_y = coords[i, j]
-    piece = board[i, j]
+        triangleNW = Polygon([L_offset, U_offset, MID], closed=True, color='k')
+        triangleNE = Polygon([R_offset, U_offset, MID],
+                             closed=True, color='0.90')
+        triangleSW = Polygon([L_offset, D_offset, MID],
+                             closed=True, color='0.90')
+        triangleSE = Polygon([R_offset, D_offset, MID], closed=True, color='k')
 
-    hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=CIRCUMRADIUS,
-                             facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=piby6)
+        self.ax.add_patch(triangleNW)
+        self.ax.add_patch(triangleNE)
+        self.ax.add_patch(triangleSW)
+        self.ax.add_patch(triangleSE)
 
-    ax.add_patch(hexagon)
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+    def render_labels(self) -> None:
+        '''
+        Renders labels for the board.
+        '''
+        label_alpha = [self.get_coords((-1, j))
+                       for j in range(self.board_size)]
+        label_numeric = [self.get_coords((i, -1))
+                         for i in range(self.board_size)]
 
+        M1 = (self.coords[0, 1][1]-self.coords[0, 0])[1] / \
+            self.coords[0, 1][0]-self.coords[0, 0][0]
+        M2 = (self.coords[1, 0][1]-self.coords[0, 0])[1] / \
+            self.coords[1, 0][0]-self.coords[0, 0][0]
 
-def pt_on_board(x, y, board_coord=coords, inrad=INRADIUS):
-    for i, j in ((n, m) for n in range(SIZE) for m in range(SIZE)):
-        x_coord, y_coord = board_coord[i, j]
-        if ((x-x_coord)**2 + (y-y_coord)**2 - inrad**2) < 0:
-            return (True, (i, j))
-    return (False, None)
+        # Rendering top labels
+        for num, coord in enumerate(label_alpha, 1):
+            x_coord, y_coord = coord
+            self.ax.text(x_coord - self.LABEL_OFFSET, y_coord - self.LABEL_OFFSET * M2, ascii_letters[num-1], ha='center',
+                         va='center', size=10, color='k', family='sans-serif', weight='light')
 
+        # Rendering left labels
+        for num, coord in enumerate(label_numeric, 1):
+            x_coord, y_coord = coord
+            self.ax.text(x_coord - self.LABEL_OFFSET, y_coord - self.LABEL_OFFSET * M1, str(num), ha='center',
+                         va='center', size=10, color='k', family='sans-serif', weight='light')
 
-players_dict = {1: 'Human', -1:'Agent' }
-Game = Hex()
-while Game.terminated == False:
-    turn  = Game.fetch_turn()
+    def render_tiles(self) -> None:
+        '''
+        Generates all the tiles for the board
+        '''
+        for i, j in ((x, y) for x in range(self.board_size) for y in range(self.board_size)):
+            coord_x, coord_y = self.coords[i, j]
 
-    if players_dict[turn] == 'Human':
-        print('Human', turn)
-        
-        def onclick(event):
-            is_find, index = pt_on_board(event.xdata, event.ydata)
-            if is_find :
-                orignal_piece_on_board = Game.board[index]
+            hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=self.CIRCUMRADIUS,
+                                     facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=np.pi/6)
+
+            self.hexagonal_tiles[(i, j)] = self.ax.add_patch(hexagon)
+
+    def pt_on_board(self, x: int, y: int):
+        '''
+        Determines the tile closest to the user's mouse click. 
+        '''
+        if (x == None) or (y == None):
+            return (False, None)
+
+        for i, j in ((n, m) for n in range(self.board_size) for m in range(self.board_size)):
+            x_coord, y_coord = self.coords[i, j]
+            if ((x-x_coord)**2 + (y-y_coord)**2 - self.INRADIUS**2) < 0:
+                return (True, (i, j))
+        return (False, None)
+
+    def get_human_move(self, turn: int) -> tuple:
+        '''
+        Gets human move from the GUI.
+        '''
+        human_move = {'Found_valid_move': False, 'move': None}
+
+        def getmove_onclick(event):
+            is_find, move = self.pt_on_board(event.xdata, event.ydata)
+            if is_find:
+                orignal_piece_on_board = self.game.board[move]
                 if orignal_piece_on_board != 0:
-                    print(f"Index {index}, is already occupied by {orignal_piece_on_board}")
+                    print(
+                        f"WARNING: {Hex.move_to_string(move)} is already occupied by {Hex.color_dict[orignal_piece_on_board]} piece.")
                 else:
-                    #VALID MOVE DONE
-                    fig.canvas.mpl_disconnect(cid)
-                    
-                    Game.step(index)
-                    
-                    if turn == 1:
-                        piece = Circle(coords[index], radius=INRADIUS,
-                                facecolor='0.2', edgecolor='k', linewidth='2')
-                    elif turn == -1:
-                        piece = Circle(coords[index], radius=INRADIUS,
-                                facecolor='w', edgecolor='k', linewidth='2')
-                    ax.add_patch(piece)
-                    fig.canvas.draw()
-                    fig.canvas.flush_events()
+                    self.fig.canvas.mpl_disconnect(event_handler_id)
+                    human_move['Found_valid_move'] = True
+                    human_move['move'] = move
+                    print(
+                        f'INFO: Move on {Hex.move_to_string(move)} registered for {Hex.color_dict[turn]}.')
 
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
-        
-        while Game.fetch_turn() == turn:
-            plt.pause(0.1) 
+        event_handler_id = self.fig.canvas.mpl_connect(
+            'button_press_event', getmove_onclick)
 
-    if players_dict[turn] == 'Agent':
-        move  = agent.func(Game.board)
-        Game.step(move)  
+        while human_move['Found_valid_move'] == False:
+            plt.pause(0.1)
+        return human_move['move']
+
+    def get_agent_move(self) -> tuple:
+        '''
+        Gets agent's move. 
+        '''
+        return agent.best_move(self.game.board)
+
+    def simulate_game(self) -> None:
+        '''
+        Simulates Hex game.
+        '''
+        while self.game.terminated == False:
+            turn = self.game.fetch_turn()
+            self.fig.suptitle(f'{Hex.color_dict[turn]} to move', fontsize=16)
+
+            if turn == 1:
+                player = self.player1
+            elif turn == -1:
+                player = self.player2
+
+            if player == 'Human':
+                self.ax.set_title('Click on empty square to register a move')
+                self.refresh()
+                move = self.get_human_move(turn)
+
+            elif player == 'Agent':
+                self.ax.set_title('Computer is thinking ...')
+                self.refresh()
+                move = self.get_agent_move()
+
+            self.game.step(move)
+            self.place_piece(move, turn)
+            self.refresh()
+
+    def place_piece(self, move: tuple, turn: int) -> None:
+        '''
+        Generates piece on the GUI window.
+        '''
         if turn == 1:
-            piece = Circle(coords[move], radius=INRADIUS,
-                    facecolor='0.2', edgecolor='k', linewidth='2')
+            piece = Circle(self.coords[move], radius=self.INRADIUS,
+                           facecolor='0.2', edgecolor='k', linewidth='2')
         elif turn == -1:
-            piece = Circle(coords[move], radius=INRADIUS,
-                    facecolor='w', edgecolor='k', linewidth='2')
-        ax.add_patch(piece)
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+            piece = Circle(self.coords[move], radius=self.INRADIUS,
+                           facecolor='w', edgecolor='k', linewidth='2')
 
-for move_number,move in enumerate(Game.move_history,1):
-    piece_player = Game.board[move]
-    coord_x,coord_y = coords[move]
-    if piece_player == 1:
-        ax.text(coord_x,coord_y, str(move_number), ha='center',
-                     va='center', size=12, fontfamily='Comic Sans MS', color='w')
-    else:
-        ax.text(coord_x,coord_y, str(move_number), ha='center',
-                     va='center', size=12, fontfamily='Comic Sans MS', color='k')
-    fig.canvas.draw()
-    fig.canvas.flush_events()
-        
-    
-        
-         
+        self.pieces[move] = self.ax.add_patch(piece)
+
+    def render_game_end(self, label_moves=True) -> None:
+        '''
+        Renders end screen for the game.
+        '''
+        if self.game.terminated == False:
+            return
+
+        self.fig.suptitle(f'{Hex.color_dict[self.game.winner]} won the game')
+        self.ax.set_title('')
+
+        if label_moves == True:
+            self.render_move_order()
+
+        self.refresh()
+
+    def render_move_order(self) -> None:
+        '''
+        Renders the move order on the game played.
+        '''
+        if self.game.terminated == False:
+            return
+
+        for move_number, move in enumerate(self.game.move_history, 1):
+            piece_player = self.game.board[move]
+            coord_x, coord_y = self.coords[move]
+            if piece_player == 1:
+                self.ax.text(coord_x, coord_y, str(move_number), ha='center',
+                             va='center', size=12, fontfamily='Comic Sans MS', color='w')
+            else:
+                self.ax.text(coord_x, coord_y, str(move_number), ha='center',
+                             va='center', size=12, fontfamily='Comic Sans MS', color='k')
 
 
+def main():
+    game = Hex(size=6)
+    gui = GUI(game, 'Human', 'Agent')
+    gui.render_coords()
+    gui.render_board()
+    gui.render_labels()
+    gui.render_tiles()
+    gui.show()
+    gui.simulate_game()
+    gui.render_game_end()
+    input('Press ENTER to QUIT')
 
-input('Press ENTER to exit')
+
+if __name__ == '__main__':
+    main()
