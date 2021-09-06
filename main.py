@@ -1,3 +1,4 @@
+from platform import system
 from string import ascii_letters
 
 import matplotlib.pyplot as plt
@@ -90,7 +91,10 @@ class GUI():
         '''
         Shows the main GUI window.
         '''
-        plt.get_current_fig_manager().window.state('zoomed')
+        if system() == 'Windows':
+            plt.get_current_fig_manager().window.state('zoomed')
+        else:
+            self.fig.show()
 
     def refresh(self) -> None:
         '''
