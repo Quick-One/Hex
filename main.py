@@ -6,11 +6,67 @@ from matplotlib.patches import Circle, Polygon, RegularPolygon
 
 import agent
 from env import Hex
+from settings import board_settings, game_settings
+
+
+class GUI_element:
+
+    @staticmethod
+    def Black_board_piece(xy: list):
+        kwargs = {
+            'closed': True,
+            'color': 'k'
+        }
+        return Polygon(xy, **kwargs)
+
+    @staticmethod
+    def White_board_piece(xy: list):
+        kwargs = {
+            'closed': True,
+            'color': '0.90'
+        }
+        return Polygon(xy, **kwargs)
+
+    @staticmethod
+    def Hex_tile(coords: tuple, radius: float):
+        kwargs = {
+            'numVertices': 6,
+            'facecolor': '1',
+            'edgecolor': 'darkgrey',
+            'linewidth': '1.5',
+            'orientation': np.pi/6,
+        }
+
+        return RegularPolygon(coords, radius=radius, **kwargs)
+
+    @staticmethod
+    def White_piece(x: float, y: float, radius: float):
+        kwargs = {
+            'facecolor': 'w',
+            'edgecolor': 'k',
+            'linewidth': '2'
+        }
+
+        return Circle((x, y), radius=radius, **kwargs)
+
+    @staticmethod
+    def Black_piece(x: float, y: float, radius: float):
+        kwargs = {
+            'facecolor': '0.2',
+            'edgecolor': 'k',
+            'linewidth': '2'
+        }
+
+        return Circle((x, y), radius=radius, **kwargs)
 
 
 class GUI():
 
-    def __init__(self, game: Hex, player1: str, player2: str, CIRCUMRADIUS: int = 1, INRADIUS: int = 0.6, BOARD_OFFSET: int = 3, LABEL_OFFSET: int = 0.7):
+    def __init__(self, game: Hex, player1: str, player2: str,
+                 CIRCUMRADIUS: int = board_settings.CIRCUMRADIUS,
+                 INRADIUS: int = board_settings.INRADIUS,
+                 BOARD_OFFSET: int = board_settings.BOARD_OFFSET,
+                 LABEL_OFFSET: int = board_settings.LABEL_OFFSET):
         self.game = game
         self.board_size = game.size
         self.fig, self.ax = plt.subplots()
@@ -34,14 +90,15 @@ class GUI():
         '''
         Shows the main GUI window.
         '''
-        self.fig.show()
+        plt.get_current_fig_manager().window.state('zoomed')
 
-    def refresh(self):
+    def refresh(self) -> None:
         '''
         Refreshes the GUI window.
         '''
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        plt.pause(0.01)
 
     def get_coords(self, index: tuple) -> tuple:
         '''
@@ -79,12 +136,10 @@ class GUI():
         D_offset = (D[0], L_offset[1] + M2*(D[0] - L_offset[0]))
         MID = ((L[0]+R[0])/2, (L[1]+R[1])/2)
 
-        triangleNW = Polygon([L_offset, U_offset, MID], closed=True, color='k')
-        triangleNE = Polygon([R_offset, U_offset, MID],
-                             closed=True, color='0.90')
-        triangleSW = Polygon([L_offset, D_offset, MID],
-                             closed=True, color='0.90')
-        triangleSE = Polygon([R_offset, D_offset, MID], closed=True, color='k')
+        triangleNW = GUI_element.Black_board_piece([L_offset, U_offset, MID])
+        triangleNE = GUI_element.White_board_piece([R_offset, U_offset, MID])
+        triangleSW = GUI_element.White_board_piece([L_offset, D_offset, MID])
+        triangleSE = GUI_element.Black_board_piece([R_offset, D_offset, MID])
 
         self.ax.add_patch(triangleNW)
         self.ax.add_patch(triangleNE)
@@ -124,12 +179,11 @@ class GUI():
         for i, j in ((x, y) for x in range(self.board_size) for y in range(self.board_size)):
             coord_x, coord_y = self.coords[i, j]
 
-            hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=self.CIRCUMRADIUS,
-                                     facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=np.pi/6)
+            tile = GUI_element.Hex_tile((coord_x, coord_y), self.CIRCUMRADIUS)
 
-            self.hexagonal_tiles[(i, j)] = self.ax.add_patch(hexagon)
+            self.hexagonal_tiles[(i, j)] = self.ax.add_patch(tile)
 
-    def pt_on_board(self, x: int, y: int):
+    def pt_on_board(self, x: int, y: int) -> tuple:
         '''
         Determines the tile closest to the user's mouse click. 
         '''
@@ -207,11 +261,9 @@ class GUI():
         Generates piece on the GUI window.
         '''
         if turn == 1:
-            piece = Circle(self.coords[move], radius=self.INRADIUS,
-                           facecolor='0.2', edgecolor='k', linewidth='2')
+            piece = GUI_element.Black_piece(*self.coords[move], self.INRADIUS)
         elif turn == -1:
-            piece = Circle(self.coords[move], radius=self.INRADIUS,
-                           facecolor='w', edgecolor='k', linewidth='2')
+            piece = GUI_element.White_piece(*self.coords[move], self.INRADIUS)
 
         self.pieces[move] = self.ax.add_patch(piece)
 
@@ -249,8 +301,8 @@ class GUI():
 
 
 def main():
-    game = Hex(size=6)
-    gui = GUI(game, 'Human', 'Agent')
+    game = Hex(size=game_settings.board_size)
+    gui = GUI(game, game_settings.player_1, game_settings.player_2)
     gui.render_coords()
     gui.render_board()
     gui.render_labels()

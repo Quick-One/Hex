@@ -1,5 +1,4 @@
 from time import sleep
-from env import Hex
 import numpy as np
 from random import choice
 
