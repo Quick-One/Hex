@@ -60,6 +60,18 @@ class GUI_element:
 
         return Circle((x, y), radius=radius, **kwargs)
 
+    @staticmethod
+    def Highlighted_tile(coords: tuple, radius: int):
+        kwargs = {
+            'numVertices': 6,
+            'facecolor': 'none',
+            'edgecolor': 'lime',
+            'linewidth': '4',
+            'orientation': np.pi/6
+        }
+
+        return RegularPolygon(coords, radius=radius, **kwargs)
+
 
 class GUI():
 
@@ -102,7 +114,10 @@ class GUI():
         '''
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-        plt.pause(0.01)
+        if system() == 'Windows':
+            pass
+        else:
+            plt.pause(0.01)
 
     def get_coords(self, index: tuple) -> tuple:
         '''
@@ -271,7 +286,7 @@ class GUI():
 
         self.pieces[move] = self.ax.add_patch(piece)
 
-    def render_game_end(self, label_moves=True) -> None:
+    def render_game_end(self, label_moves=True, connection = True) -> None:
         '''
         Renders end screen for the game.
         '''
@@ -283,6 +298,11 @@ class GUI():
 
         if label_moves == True:
             self.render_move_order()
+        
+        self.refresh()
+            
+        if connection == True:
+            self.render_connection()
 
         self.refresh()
 
@@ -302,6 +322,18 @@ class GUI():
             else:
                 self.ax.text(coord_x, coord_y, str(move_number), ha='center',
                              va='center', size=12, fontfamily='Comic Sans MS', color='k')
+
+    def render_connection(self) -> None:
+        '''
+        Renders the winning connection.
+        '''
+        connection = Hex.shortest_connection(
+            self.game.board, self.board_size, self.game.winner)
+        for i, j in connection:
+            coord_x, coord_y = self.coords[(i, j)]
+            Higlighted_tile = GUI_element.Highlighted_tile(
+                (coord_x, coord_y), self.CIRCUMRADIUS)
+            self.ax.add_patch(Higlighted_tile)
 
 
 def main():

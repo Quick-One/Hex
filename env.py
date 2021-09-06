@@ -1,13 +1,11 @@
-import cProfile
 import random
-
-import numpy as np
+from collections import defaultdict
+from queue import Queue
 from string import ascii_letters
 
-from hex_isterminal import hex_IsTerminal
-from Hex_utils import visualize_board
+import numpy as np
 
-BOARD_SIZE = 6
+from hex_isterminal import fetch_neighbours, hex_IsTerminal
 
 
 class Hex:
@@ -20,7 +18,7 @@ class Hex:
     """
     color_dict = {1: 'Black', -1: 'White'}
 
-    def __init__(self, size=BOARD_SIZE, multi_agent=False):
+    def __init__(self, size, multi_agent=False):
         self.board = np.zeros((size, size), np.int8)
         self.history = []
         self.terminated = False
@@ -122,6 +120,66 @@ class Hex:
         Generates data for nn in the correct format
         '''
         return (self.history, self.winner)
+
+    @staticmethod
+    def shortest_connection(board: np.ndarray, size: int, color: int) -> list:
+        '''
+        If board is terminated returns the winning connection.
+        '''
+        START_NODE = 'START'
+        END_NODE = 'END'
+
+        graph_dict = defaultdict(list)
+        for i, j in ((x, y) for x in range(size) for y in range(size)):
+            for neighbour in fetch_neighbours((i, j), color, size, board):
+                graph_dict[(i, j)].append(neighbour)
+
+            if color == 1:
+                if i == 0:
+                    graph_dict[START_NODE].append((i, j))
+                    graph_dict[(i, j)].append(START_NODE)
+                elif i == (size - 1):
+                    graph_dict[END_NODE].append((i, j))
+                    graph_dict[(i, j)].append(END_NODE)
+
+            if color == -1:
+                if j == 0:
+                    graph_dict[START_NODE].append((i, j))
+                    graph_dict[(i, j)].append(START_NODE)
+                elif j == (size - 1):
+                    graph_dict[END_NODE].append((i, j))
+                    graph_dict[(i, j)].append(END_NODE)
+
+        cost_dict = {}
+        cost_dict[START_NODE] = 0
+        queue = Queue()
+        queue.put(START_NODE)
+        while not(queue.empty()):
+            node = queue.get()
+            node_cost = cost_dict[node]
+            for neighbour in graph_dict[node]:
+                if cost_dict.get(neighbour, None) == None:
+                    cost_dict[neighbour] = node_cost + 1
+                    if neighbour == END_NODE:
+                        break
+                    queue.put(neighbour)
+
+        shortest_path = []
+        node = END_NODE
+        while node != START_NODE:
+            next_node = None
+            next_node_value = float('inf')
+
+            for neighbour in graph_dict[node]:
+                neighbour_value = cost_dict.get(neighbour, float('inf'))
+                if neighbour_value < next_node_value:
+                    next_node_value = neighbour_value
+                    next_node = neighbour
+            node = next_node
+            shortest_path.append(node)
+        shortest_path.remove(START_NODE)
+
+        return shortest_path
 
 
 def generate_games(batchsize=100):
