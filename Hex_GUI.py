@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
 
 import agent
-from hex_class import GuiHexState, HexState
+from Hex_class import GuiHexState
 from settings import board_settings, game_settings
 
 
@@ -338,7 +338,7 @@ class GUI():
             self.ax.add_patch(Higlighted_tile)
 
 
-def main():
+def _main():
     game = GuiHexState(size=game_settings.board_size)
     gui = GUI(game, game_settings.player_1, game_settings.player_2)
     gui.render_coords()
@@ -352,4 +352,12 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    _main()
+    pass
+
+    # Code to generate call graph
+    # from pycallgraph import PyCallGraph
+    # from pycallgraph.output import GraphvizOutput
+
+    # with PyCallGraph(output=GraphvizOutput()):
+    #     main()

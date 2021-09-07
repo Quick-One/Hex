@@ -1,35 +1,32 @@
-import numpy as np
-from string import ascii_letters
 from collections import defaultdict
 from queue import Queue
-from unionfind import UnionFind
+from random import choice
+from string import ascii_letters
+
+import numpy as np
 
 from Hex_utils import visualize_board
-import random
-
-BOARD_SIZE = 6
+from unionfind import UnionFind
 
 # STATIC VARIABLES
 EDGE_START = 'start'
 EDGE_FINISH = 'finish'
 
-NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (-1, 1), (0, 1), (1, 0), (1, -1))
+NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (0, 1), (1, 0), (1, -1), (-1, 1))
 
-WHITE = -1
 BLACK = 1
+WHITE = -1
 
 
 class HexState:
-    def __init__(self, size=BOARD_SIZE) -> None:
+    def __init__(self, size) -> None:
         self.size = size
-        self.board = np.zeros((size, size))
-
+        self.board = np.zeros((size, size), dtype=np.int8)
         self.to_play = BLACK
-
-        self.groups = {WHITE: UnionFind(), BLACK: UnionFind()}
+        self.groups = {BLACK: UnionFind(), WHITE: UnionFind()}
 
     @staticmethod
-    def neighbours(cell: tuple, size) -> list:
+    def neighbours(cell: tuple, size: int) -> list:
         """
         Returns a list of the neighbours of the passed cell.
 
@@ -37,8 +34,7 @@ class HexState:
             size (int): size of the board
             cell (tuple):
         """
-        x = cell[0]
-        y = cell[1]
+        x, y = cell
         return [(n[0] + x, n[1] + y) for n in NEIGHBOUR_PATTERNS
                 if (0 <= n[0] + x < size and 0 <= n[1] + y < size)]
 
@@ -63,17 +59,6 @@ class HexState:
         else:
             return None
 
-    def set_turn(self, player: int) -> None:
-        """
-        Set the player to take the next move.
-        Raises:
-            ValueError if player is not -1 or 1
-        """
-        if (player == WHITE or player == BLACK) and player != 0:
-            self.to_play = player
-        else:
-            raise ValueError(f'Invalid player {player}')
-
     def turn(self) -> int:
         """
         Returns the player who's turn it is.
@@ -94,6 +79,8 @@ class HexState:
     def place_stone(self, cell, player, coord_index):
         """
         Places a stone.
+        coord_index = 0; corresponds to row. Assign this for checking connection from top to bottom.
+        coord_index = 1; corresponds to column. Assign this for checking connection from left to right.
 
         Args:
             cell (tuple): row and column of the cell
@@ -119,7 +106,7 @@ class HexState:
 class GuiHexState(HexState):
     color_legend = {1: 'Black', -1: 'White'}
 
-    def __init__(self, size=BOARD_SIZE) -> None:
+    def __init__(self, size) -> None:
         super().__init__(size)
         self.move_history = []
 
@@ -136,7 +123,7 @@ class GuiHexState(HexState):
             self.place_stone(cell, WHITE, 1)
             self.to_play = BLACK
 
-    def get_move_history(self):
+    def get_move_history(self) -> list:
         """
         Returns the move_history of the game.
         Note: Used in GUI to display move numbers.
@@ -155,6 +142,7 @@ class GuiHexState(HexState):
     def shortest_connection(board: np.ndarray, size: int, player: int) -> list:
         """
         If board is terminated returns the winning connection.
+        Uses BFS to find the shortest path.
 
         Args:
             board (np.ndarray): A numpy array representing the board in NxN shape.
@@ -211,7 +199,6 @@ class GuiHexState(HexState):
         while node != START_NODE:
             next_node = None
             next_node_value = float('inf')
-
             for neighbour in graph_dict[node]:
                 neighbour_value = cost_dict.get(neighbour, float('inf'))
                 if neighbour_value < next_node_value:
@@ -224,20 +211,28 @@ class GuiHexState(HexState):
         return shortest_path
 
 
-def test_agent():
-    board = GuiHexState()
+def _main(visualise=True):
+
+    board = GuiHexState(6)
     while board.winner == None:
-        action = random.choice(board.possible_actions())
+        action = choice(board.possible_actions())
         board.step(action)
-
-    if board.winner == WHITE:
-        print("WHITE WON!")
-    else:
+    if board.winner == BLACK:
         print("BLACK WON!")
+    else:
+        print("WHITE WON!")
 
-    # print(board.move_history)
-    # print(board.board)
-    # print(board.shortest_connection(board.board, BOARD_SIZE, board.winner))
-    visualize_board(board.board)
+    print(board.board)
+    if visualise:
+        visualize_board(board.board)
 
-# test_agent()
+
+if __name__ == '__main__':
+    _main()
+    pass
+    # Code to generate call graph
+    # from pycallgraph import PyCallGraph
+    # from pycallgraph.output import GraphvizOutput
+
+    # with PyCallGraph(output=GraphvizOutput()):
+    #     _main(visualise=False)
