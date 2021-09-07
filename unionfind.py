@@ -19,7 +19,6 @@ class UnionFind:
         self.parent = {}
         self.rank = {}
         self.groups = {}
-        self.ignored = []
 
     def join(self, x, y) -> bool:
         """
@@ -31,27 +30,34 @@ class UnionFind:
             y (tuple): game board cell
 
         """
-        rep_x = self.find(x)
-        rep_y = self.find(y)
+        # Find root/parent node of x and y
+        root_x = self.find(x)
+        root_y = self.find(y)
 
-        if rep_x == rep_y:
+        # Return false if x and y are in the same group
+        if root_x == root_y:
             return False
-        if self.rank[rep_x] < self.rank[rep_y]:
-            self.parent[rep_x] = rep_y
 
-            self.groups[rep_y].extend(self.groups[rep_x])
-            del self.groups[rep_x]
-        elif self.rank[rep_x] > self.rank[rep_y]:
-            self.parent[rep_y] = rep_x
+        # Add the tree with the smaller rank to the one with the higher rank and delete the smaller tree.
+        if self.rank[root_x] < self.rank[root_y]:
+            self.parent[root_x] = root_y
 
-            self.groups[rep_x].extend(self.groups[rep_y])
-            del self.groups[rep_y]
+            self.groups[root_y].extend(self.groups[root_x])
+            del self.groups[root_x]
+
+        elif self.rank[root_x] > self.rank[root_y]:
+            self.parent[root_y] = root_x
+
+            self.groups[root_x].extend(self.groups[root_y])
+            del self.groups[root_y]
+
+        # If the trees have same rank, add one to the other and increase it's rank.
         else:
-            self.parent[rep_x] = rep_y
-            self.rank[rep_y] += 1
+            self.parent[root_x] = root_y
+            self.rank[root_y] += 1
 
-            self.groups[rep_y].extend(self.groups[rep_x])
-            del self.groups[rep_x]
+            self.groups[root_y].extend(self.groups[root_x])
+            del self.groups[root_x]
 
         return True
 
@@ -66,22 +72,21 @@ class UnionFind:
         if x not in self.parent:
             self.parent[x] = x
             self.rank[x] = 0
-            if x in self.ignored:
-                self.groups[x] = []
-            else:
-                self.groups[x] = [x]
+            self.groups[x] = [x]
 
-        px = self.parent[x]
-        if x == px:
+        # If root node then return node itself.
+        parent_x = self.parent[x]
+        if x == parent_x:
             return x
 
-        gx = self.parent[px]
-        if gx == px:
-            return px
+        parent_parent_x = self.parent[parent_x]
+        if parent_parent_x == parent_x:
+            return parent_x
 
-        self.parent[x] = gx
+        # Compress treee by bringing passed node above by making it's parent, it's parent's parent
+        self.parent[x] = parent_parent_x
 
-        return self.find(gx)
+        return self.find(parent_parent_x)
 
     def connected(self, x, y) -> bool:
         """
@@ -92,12 +97,6 @@ class UnionFind:
             y (tuple): game board cell
         """
         return self.find(x) == self.find(y)
-
-    def set_ignored_elements(self, ignore):
-        """
-        Elements in ignored, edges has to be ignored
-        """
-        self.ignored = ignore
 
     def get_groups(self) -> dict:
         """

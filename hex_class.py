@@ -10,8 +10,8 @@ import random
 BOARD_SIZE = 6
 
 # STATIC VARIABLES
-EDGE1 = 1
-EDGE2 = 2
+EDGE_START = 'start'
+EDGE_FINISH = 'finish'
 
 NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (-1, 1), (0, 1), (1, 0), (1, -1))
 
@@ -24,19 +24,17 @@ class HexState:
         self.board = np.zeros((size, size))
 
         self.to_play = BLACK
-        self.n_moves = {WHITE: 0, BLACK: 0}
 
         self.groups = {WHITE: UnionFind(), BLACK: UnionFind()}
-        self.groups[WHITE].set_ignored_elements([EDGE1, EDGE2])
-        self.groups[BLACK].set_ignored_elements([EDGE1, EDGE2])
 
     @staticmethod
     def neighbours(cell: tuple, size) -> list:
         """
-        Return list of neighbors of the passed cell.
+        Returns a list of the neighbours of the passed cell.
 
         Args:
-            cell tuple):
+            size (int): size of the board
+            cell (tuple):
         """
         x = cell[0]
         y = cell[1]
@@ -56,9 +54,9 @@ class HexState:
         Return a number corresponding to the winning player,
         or none if the game is not over.
         """
-        if self.groups[WHITE].connected(EDGE1, EDGE2):
+        if self.groups[WHITE].connected(EDGE_START, EDGE_FINISH):
             return WHITE
-        elif self.groups[BLACK].connected(EDGE1, EDGE2):
+        elif self.groups[BLACK].connected(EDGE_START, EDGE_FINISH):
             return BLACK
         else:
             return None
@@ -75,14 +73,20 @@ class HexState:
             raise ValueError(f'Invalid player {player}')
 
     def turn(self) -> int:
+        """
+        Returns the player who's turn it is.
+        """
         return self.to_play
     
     def step(self, cell: tuple) -> None:
+        """
+        Makes the move passed in, according to who's turn it is.
+        """
         if self.to_play == BLACK:
-            self.place_stone(cell, BLACK, 1)
+            self.place_stone(cell, BLACK, 0)
             self.to_play = WHITE
         elif self.to_play == WHITE:
-            self.place_stone(cell, WHITE, 0)
+            self.place_stone(cell, WHITE, 1)
             self.to_play = BLACK
 
     def place_stone(self, cell, player, coord_index):
@@ -97,48 +101,17 @@ class HexState:
 
         if self.board[cell] == 0:
             self.board[cell] = player
-            self.n_moves[player] += 1
         else:
             raise ValueError(f"Cell {cell} already occupied.")
 
         if cell[coord_index] == 0:
-            self.groups[player].join(EDGE1, cell)
+            self.groups[player].join(EDGE_START, cell)
         elif cell[coord_index] == self.size - 1:
-            self.groups[player].join(EDGE2, cell)
+            self.groups[player].join(EDGE_FINISH, cell)
 
         for neighbour in HexState.neighbours(cell, self.size):
             if self.board[neighbour] == player:
                 self.groups[player].join(neighbour, cell)
-
-    def __str__(self):
-        """
-        Print an ascii representation of the game board.
-        Notes:
-            Used for gtp interface
-        """
-        white = 'W'
-        black = 'B'
-        empty = '.'
-        ret = '\n'
-        coord_size = len(str(self.size))
-        offset = 1
-        ret += ' ' * (offset + 1)
-        for x in range(self.size):
-            ret += chr(ord('A') + x) + ' ' * offset * 2
-        ret += '\n'
-        for y in range(self.size):
-            ret += str(y + 1) + ' ' * (offset * 2 + coord_size - len(str(y + 1)))
-            for x in range(self.size):
-                if self.board[x, y] == WHITE:
-                    ret += white
-                elif self.board[x, y] == BLACK:
-                    ret += black
-                else:
-                    ret += empty
-                ret += ' ' * offset * 2
-            ret += white + "\n" + ' ' * offset * (y + 1)
-        ret += ' ' * (offset * 2 + 1) + (black + ' ' * offset * 2) * self.size
-        return ret
 
 
 class GuiHexState(HexState):
@@ -149,28 +122,46 @@ class GuiHexState(HexState):
         self.move_history = []
 
     def step(self, cell: tuple) -> None:
+        """
+        Modified step function to include adding moves to move_history list.
+        """
         self.move_history.append(cell)
 
         if self.to_play == BLACK:
-            self.place_stone(cell, BLACK, 1)
+            self.place_stone(cell, BLACK, 0)
             self.to_play = WHITE
         elif self.to_play == WHITE:
-            self.place_stone(cell, WHITE, 0)
+            self.place_stone(cell, WHITE, 1)
             self.to_play = BLACK
 
     def get_move_history(self):
+        """
+        Returns the move_history of the game.
+        Note: Used in GUI to display move numbers.
+        """
         return self.move_history
 
     @staticmethod
     def move_to_string(move: tuple) -> str:
+        """
+        Returns the coordinate in '$#' form where $ - letter and # - digit.
+        """
         i, j = move
         return f"{ascii_letters[j]}{i+1}"
 
     @staticmethod
     def shortest_connection(board: np.ndarray, size: int, player: int) -> list:
-        '''
+        """
         If board is terminated returns the winning connection.
-        '''
+
+        Args:
+            board (np.ndarray): A numpy array representing the board in NxN shape.
+            size (int): board size (N)
+            player (int): player number
+
+        Returns:
+            List containg tuples representing cells in the shortest path.
+        """
         START_NODE = 'START'
         END_NODE = 'END'
 
@@ -242,7 +233,7 @@ def test_agent():
         print("BLACK WON!")
 
     # print(board.move_history)
-    print(board)
+    # print(board.board)
     # print(board.shortest_connection(board.board, BOARD_SIZE, board.winner))
     visualize_board(board.board)
 
