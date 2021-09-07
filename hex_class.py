@@ -1,37 +1,38 @@
-from typing import List
 import numpy as np
 from string import ascii_letters
 from collections import defaultdict
 from queue import Queue
+from unionfind import UnionFind
 
+from Hex_utils import visualize_board
 import random
 
 BOARD_SIZE = 6
 
-from unionfind import UnionFind
-
+# STATIC VARIABLES
 EDGE1 = 1
 EDGE2 = 2
 
 NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (-1, 1), (0, 1), (1, 0), (1, -1))
 
-# White = 1; Black = -1
+WHITE = -1
+BLACK = 1
 
 class HexState:
     def __init__(self, size=BOARD_SIZE) -> None:
         self.size = size
         self.board = np.zeros((size, size))
 
-        self.to_play = -1
-
-        self.n_moves = {-1: 0, 1: 0}
+        self.to_play = BLACK
+        self.n_moves = {WHITE: 0, BLACK: 0}
 
         self.white_groups = UnionFind()
         self.black_groups = UnionFind()
         self.white_groups.set_ignored_elements([EDGE1, EDGE2])
         self.black_groups.set_ignored_elements([EDGE1, EDGE2])
 
-    def neighbours(self, cell: tuple) -> list:
+    @staticmethod
+    def neighbours(cell: tuple, size) -> list:
         """
         Return list of neighbors of the passed cell.
 
@@ -41,7 +42,7 @@ class HexState:
         x = cell[0]
         y = cell[1]
         return [(n[0] + x, n[1] + y) for n in NEIGHBOUR_PATTERNS
-                if (0 <= n[0] + x < self.size and 0 <= n[1] + y < self.size)]
+                if (0 <= n[0] + x < size and 0 <= n[1] + y < size)]
 
     def possible_actions(self) -> list:
         """
@@ -50,11 +51,6 @@ class HexState:
         moves = [(x, y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == 0]
         return moves
 
-    @staticmethod
-    def move_to_string(move: tuple) -> str:
-        i, j = move
-        return f"{ascii_letters[j]}{i+1}"
-
     @property
     def winner(self) -> int:
         """
@@ -62,9 +58,9 @@ class HexState:
         or none if the game is not over.
         """
         if self.white_groups.connected(EDGE1, EDGE2):
-            return 1
+            return WHITE
         elif self.black_groups.connected(EDGE1, EDGE2):
-            return -1
+            return BLACK
         else:
             return None
 
@@ -74,7 +70,7 @@ class HexState:
         Raises:
             ValueError if player is not -1 or 1
         """
-        if (player == 1 or player == -1) and player != 0:
+        if (player == WHITE or player == BLACK) and player != 0:
             self.to_play = player
         else:
             raise ValueError(f'Invalid player {player}')
@@ -83,12 +79,12 @@ class HexState:
         return self.to_play
     
     def step(self, cell: tuple) -> None:
-        if self.to_play == 1:
-            self.place_white_stone(cell)
-            self.to_play = -1
-        elif self.to_play == -1:
+        if self.to_play == BLACK:
             self.place_black_stone(cell)
-            self.to_play = 1
+            self.to_play = WHITE
+        elif self.to_play == WHITE:
+            self.place_white_stone(cell)
+            self.to_play = BLACK
 
     def place_white_stone(self, cell):
         """
@@ -98,8 +94,8 @@ class HexState:
             cell (tuple): row and column of the cell
         """
         if self.board[cell] == 0:
-            self.board[cell] = 1
-            self.n_moves[1] += 1
+            self.board[cell] = WHITE
+            self.n_moves[WHITE] += 1
         else:
             raise ValueError(f"Cell {cell} already occupied.")
 
@@ -110,8 +106,8 @@ class HexState:
             self.white_groups.join(EDGE2, cell)
 
         # Join any groups connected by the new stone
-        for neighbor in self.neighbours(cell):
-            if self.board[neighbor] == 1:
+        for neighbor in HexState.neighbours(cell, self.size):
+            if self.board[neighbor] == WHITE:
                 self.white_groups.join(neighbor, cell)
 
     def place_black_stone(self, cell):
@@ -122,8 +118,8 @@ class HexState:
             cell (tuple): row and column of the cell
         """
         if self.board[cell] == 0:
-            self.board[cell] = -1
-            self.n_moves[-1] += 1
+            self.board[cell] = BLACK
+            self.n_moves[BLACK] += 1
         else:
             raise ValueError(f"Cell {cell} already occupied.")
 
@@ -134,26 +130,80 @@ class HexState:
             self.black_groups.join(EDGE2, cell)
 
         # Join any groups connected by the new stone
-        for neighbor in self.neighbours(cell):
-            if self.board[neighbor] == -1:
+        for neighbor in HexState.neighbours(cell, self.size):
+            if self.board[neighbor] == BLACK:
                 self.black_groups.join(neighbor, cell)
 
-    def shortest_connection(self, board: np.ndarray, size: int, color: int) -> list:
+    def __str__(self):
         """
+        Print an ascii representation of the game board.
+        Notes:
+            Used for gtp interface
+        """
+        white = 'W'
+        black = 'B'
+        empty = '.'
+        ret = '\n'
+        coord_size = len(str(self.size))
+        offset = 1
+        ret += ' ' * (offset + 1)
+        for x in range(self.size):
+            ret += chr(ord('A') + x) + ' ' * offset * 2
+        ret += '\n'
+        for y in range(self.size):
+            ret += str(y + 1) + ' ' * (offset * 2 + coord_size - len(str(y + 1)))
+            for x in range(self.size):
+                if self.board[x, y] == WHITE:
+                    ret += white
+                elif self.board[x, y] == BLACK:
+                    ret += black
+                else:
+                    ret += empty
+                ret += ' ' * offset * 2
+            ret += white + "\n" + ' ' * offset * (y + 1)
+        ret += ' ' * (offset * 2 + 1) + (black + ' ' * offset * 2) * self.size
+        return ret
+
+
+class GuiHexState(HexState):
+    color_legend = {1: 'Black', -1: 'White'}
+
+    def __init__(self, size=BOARD_SIZE) -> None:
+        super().__init__(size)
+        self.move_history = []
+
+    def step(self, cell: tuple) -> None:
+        self.move_history.append(cell)
+
+        if self.to_play == BLACK:
+            self.place_black_stone(cell)
+            self.to_play = WHITE
+        elif self.to_play == WHITE:
+            self.place_white_stone(cell)
+            self.to_play = BLACK
+
+    @staticmethod
+    def move_to_string(move: tuple) -> str:
+        i, j = move
+        return f"{ascii_letters[j]}{i+1}"
+
+    @staticmethod
+    def shortest_connection(board: np.ndarray, size: int, player: int) -> list:
+        '''
         If board is terminated returns the winning connection.
-        """
+        '''
         START_NODE = 'START'
         END_NODE = 'END'
 
         graph_dict = defaultdict(list)
         for i, j in ((x, y) for x in range(size) for y in range(size)):
-            if board[i,j] != color:
+            if board[i,j] != player:
                 continue
             
-            for neighbour in self.neighbours((i, j), color, size, board):
+            for neighbour in GuiHexState.neighbours((i, j), size):
                 graph_dict[(i, j)].append(neighbour)
 
-            if color == 1:
+            if player == BLACK:
                 if i == 0:
                     graph_dict[START_NODE].append((i, j))
                     graph_dict[(i, j)].append(START_NODE)
@@ -161,7 +211,7 @@ class HexState:
                     graph_dict[END_NODE].append((i, j))
                     graph_dict[(i, j)].append(END_NODE)
 
-            if color == -1:
+            if player == WHITE:
                 if j == 0:
                     graph_dict[START_NODE].append((i, j))
                     graph_dict[(i, j)].append(START_NODE)
@@ -200,13 +250,20 @@ class HexState:
 
         return shortest_path
 
-        
+
 def test_agent():
-    board = HexState()
+    board = GuiHexState()
     while board.winner == None:
         action = random.choice(board.possible_actions())
         board.step(action)
 
-    print(board.winner)
+    if board.winner == WHITE:
+        print("WHITE WON!")
+    else:
+        print("BLACK WON!")
 
-# test_agent()
+    print(board.move_history)
+    # print(board.shortest_connection(board.board, BOARD_SIZE, board.winner))
+    visualize_board(board.board.T)
+
+test_agent()
