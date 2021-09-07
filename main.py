@@ -286,7 +286,7 @@ class GUI():
 
         self.pieces[move] = self.ax.add_patch(piece)
 
-    def render_game_end(self, label_moves=True, connection = True) -> None:
+    def render_game_end(self, label_moves=True, connection=True) -> None:
         '''
         Renders end screen for the game.
         '''
@@ -298,9 +298,9 @@ class GUI():
 
         if label_moves == True:
             self.render_move_order()
-        
+
         self.refresh()
-            
+
         if connection == True:
             self.render_connection()
 

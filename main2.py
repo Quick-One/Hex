@@ -254,7 +254,8 @@ class GUI():
         '''
         while self.game.winner == None:
             turn = self.game.turn()
-            self.fig.suptitle(f'{GuiHexState.color_legend[turn]} to move', fontsize=16)
+            self.fig.suptitle(
+                f'{GuiHexState.color_legend[turn]} to move', fontsize=16)
 
             if turn == 1:
                 player = self.player1
@@ -286,21 +287,22 @@ class GUI():
 
         self.pieces[move] = self.ax.add_patch(piece)
 
-    def render_game_end(self, label_moves=True, connection = True) -> None:
+    def render_game_end(self, label_moves=True, connection=True) -> None:
         '''
         Renders end screen for the game.
         '''
         if self.game.winner == None:
             return
 
-        self.fig.suptitle(f'{GuiHexState.color_legend[self.game.winner]} won the game')
+        self.fig.suptitle(
+            f'{GuiHexState.color_legend[self.game.winner]} won the game')
         self.ax.set_title('')
 
         if label_moves == True:
             self.render_move_order()
-        
+
         self.refresh()
-            
+
         if connection == True:
             self.render_connection()
 

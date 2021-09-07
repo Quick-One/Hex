@@ -131,9 +131,9 @@ class Hex:
 
         graph_dict = defaultdict(list)
         for i, j in ((x, y) for x in range(size) for y in range(size)):
-            if board[i,j] != color:
+            if board[i, j] != color:
                 continue
-            
+
             for neighbour in fetch_neighbours((i, j), color, size, board):
                 graph_dict[(i, j)].append(neighbour)
 

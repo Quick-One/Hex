@@ -18,6 +18,7 @@ NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (-1, 1), (0, 1), (1, 0), (1, -1))
 WHITE = -1
 BLACK = 1
 
+
 class HexState:
     def __init__(self, size=BOARD_SIZE) -> None:
         self.size = size
@@ -45,7 +46,8 @@ class HexState:
         """
         Get a list of all moves possible in the current board state.
         """
-        moves = [(x, y) for x in range(self.size) for y in range(self.size) if self.board[x][y] == 0]
+        moves = [(x, y) for x in range(self.size)
+                 for y in range(self.size) if self.board[x][y] == 0]
         return moves
 
     @property
@@ -77,7 +79,7 @@ class HexState:
         Returns the player who's turn it is.
         """
         return self.to_play
-    
+
     def step(self, cell: tuple) -> None:
         """
         Makes the move passed in, according to who's turn it is.
@@ -167,11 +169,12 @@ class GuiHexState(HexState):
 
         graph_dict = defaultdict(list)
         for i, j in ((x, y) for x in range(size) for y in range(size)):
-            if board[i,j] != player:
+            if board[i, j] != player:
                 continue
-            
+
             for neighbour in GuiHexState.neighbours((i, j), size):
-                graph_dict[(i, j)].append(neighbour)
+                if board[neighbour] == player:
+                    graph_dict[(i, j)].append(neighbour)
 
             if player == BLACK:
                 if i == 0:
