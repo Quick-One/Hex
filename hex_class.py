@@ -26,10 +26,9 @@ class HexState:
         self.to_play = BLACK
         self.n_moves = {WHITE: 0, BLACK: 0}
 
-        self.white_groups = UnionFind()
-        self.black_groups = UnionFind()
-        self.white_groups.set_ignored_elements([EDGE1, EDGE2])
-        self.black_groups.set_ignored_elements([EDGE1, EDGE2])
+        self.groups = {WHITE: UnionFind(), BLACK: UnionFind()}
+        self.groups[WHITE].set_ignored_elements([EDGE1, EDGE2])
+        self.groups[BLACK].set_ignored_elements([EDGE1, EDGE2])
 
     @staticmethod
     def neighbours(cell: tuple, size) -> list:
@@ -57,9 +56,9 @@ class HexState:
         Return a number corresponding to the winning player,
         or none if the game is not over.
         """
-        if self.white_groups.connected(EDGE1, EDGE2):
+        if self.groups[WHITE].connected(EDGE1, EDGE2):
             return WHITE
-        elif self.black_groups.connected(EDGE1, EDGE2):
+        elif self.groups[BLACK].connected(EDGE1, EDGE2):
             return BLACK
         else:
             return None
@@ -80,59 +79,36 @@ class HexState:
     
     def step(self, cell: tuple) -> None:
         if self.to_play == BLACK:
-            self.place_black_stone(cell)
+            self.place_stone(cell, BLACK, 1)
             self.to_play = WHITE
         elif self.to_play == WHITE:
-            self.place_white_stone(cell)
+            self.place_stone(cell, WHITE, 0)
             self.to_play = BLACK
 
-    def place_white_stone(self, cell):
+    def place_stone(self, cell, player, coord_index):
         """
-        Place a white stone.
+        Places a stone.
 
         Args:
             cell (tuple): row and column of the cell
+            player (int): player by which stone has been placed
+            coord_index: 0 for x, 1 for y to check for end condition row wise or column wise respectively
         """
+
         if self.board[cell] == 0:
-            self.board[cell] = WHITE
-            self.n_moves[WHITE] += 1
+            self.board[cell] = player
+            self.n_moves[player] += 1
         else:
             raise ValueError(f"Cell {cell} already occupied.")
 
-        # If the placed cell touches any edge cell, connect it
-        if cell[0] == 0:
-            self.white_groups.join(EDGE1, cell)
-        elif cell[0] == self.size - 1:
-            self.white_groups.join(EDGE2, cell)
+        if cell[coord_index] == 0:
+            self.groups[player].join(EDGE1, cell)
+        elif cell[coord_index] == self.size - 1:
+            self.groups[player].join(EDGE2, cell)
 
-        # Join any groups connected by the new stone
-        for neighbor in HexState.neighbours(cell, self.size):
-            if self.board[neighbor] == WHITE:
-                self.white_groups.join(neighbor, cell)
-
-    def place_black_stone(self, cell):
-        """
-        Place a black stone.
-
-        Args:
-            cell (tuple): row and column of the cell
-        """
-        if self.board[cell] == 0:
-            self.board[cell] = BLACK
-            self.n_moves[BLACK] += 1
-        else:
-            raise ValueError(f"Cell {cell} already occupied.")
-
-        # If the placed cell touches any edge cell, connect it
-        if cell[1] == 0:
-            self.black_groups.join(EDGE1, cell)
-        elif cell[1] == self.size - 1:
-            self.black_groups.join(EDGE2, cell)
-
-        # Join any groups connected by the new stone
-        for neighbor in HexState.neighbours(cell, self.size):
-            if self.board[neighbor] == BLACK:
-                self.black_groups.join(neighbor, cell)
+        for neighbour in HexState.neighbours(cell, self.size):
+            if self.board[neighbour] == player:
+                self.groups[player].join(neighbour, cell)
 
     def __str__(self):
         """
@@ -176,11 +152,14 @@ class GuiHexState(HexState):
         self.move_history.append(cell)
 
         if self.to_play == BLACK:
-            self.place_black_stone(cell)
+            self.place_stone(cell, BLACK, 1)
             self.to_play = WHITE
         elif self.to_play == WHITE:
-            self.place_white_stone(cell)
+            self.place_stone(cell, WHITE, 0)
             self.to_play = BLACK
+
+    def get_move_history(self):
+        return self.move_history
 
     @staticmethod
     def move_to_string(move: tuple) -> str:
@@ -262,8 +241,9 @@ def test_agent():
     else:
         print("BLACK WON!")
 
-    print(board.move_history)
+    # print(board.move_history)
+    print(board)
     # print(board.shortest_connection(board.board, BOARD_SIZE, board.winner))
-    visualize_board(board.board.T)
+    visualize_board(board.board)
 
-test_agent()
+# test_agent()
