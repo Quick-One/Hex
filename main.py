@@ -10,7 +10,7 @@ def main():
     gui.render_board()
     gui.render_labels()
     gui.render_tiles()
-    gui.show()
+    gui.show(fullscreen=False)
     gui.simulate_game()
     gui.render_game_end()
     input('Press ENTER to QUIT')

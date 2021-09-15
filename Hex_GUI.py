@@ -99,12 +99,15 @@ class GUI():
         self.BOARD_OFFSET = BOARD_OFFSET
         self.LABEL_OFFSET = LABEL_OFFSET
 
-    def show(self) -> None:
+    def show(self, fullscreen = True) -> None:
         '''
         Shows the main GUI window.
         '''
         if system() == 'Windows':
-            plt.get_current_fig_manager().window.state('zoomed')
+            if fullscreen:
+                plt.get_current_fig_manager().window.state('zoomed')
+            else:
+                self.fig.show()
         else:
             self.fig.show()
 
@@ -345,7 +348,7 @@ def _main():
     gui.render_board()
     gui.render_labels()
     gui.render_tiles()
-    gui.show()
+    gui.show(fullscreen = False)
     gui.simulate_game()
     gui.render_game_end()
     input('Press ENTER to QUIT')

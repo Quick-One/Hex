@@ -135,7 +135,6 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
         plt.savefig(f'game_{str(filename)}.png', bbox_inches='tight')
     else:
         plt.show()
-    plt.cla()
 
 
 def fetch_neighbours(coords: tuple, player: int, size: int, board: np.ndarray):
