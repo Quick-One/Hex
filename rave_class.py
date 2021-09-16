@@ -1,6 +1,8 @@
 from Hex_class import HexState
 from config import RAVE_constants
 from math import sqrt, log
+from random import choice
+from copy import deepcopy
 
 """
 NODE:
@@ -27,7 +29,7 @@ MCTS Agent:
         1) search
         2) select_node
         3) rollout
-        4) backup
+        4) backpropogate
         5) expansion
 """
 
@@ -35,7 +37,7 @@ class Node:
     def __init__(self, move: tuple, parent = None):
         self.parent = parent
         self.move = move
-        #moves : Node()
+        #move : Node()
         self.children = {}
 
         self.N = 0
@@ -55,3 +57,27 @@ class Node:
 
     def add_children(self, new_children: dict):
         self.children.update(new_children)
+
+"""
+Each iteration:
+1) Selection
+2) Expansion
+3) Simulation(Rollout)
+4) Backpropogation
+"""
+
+class MCTSAgent:
+    def __init__(self, root_state) -> None:
+        root_node = Node()
+
+    def simulate(self, state: HexState):
+        curr_state = deepcopy(state)
+        possible_moves = curr_state.possible_actions()
+        
+        while curr_state.winner == None:
+            curr_action = choice(possible_moves)
+            curr_state.step(curr_action)
+            possible_moves.remove(curr_action)
+
+    
+        
