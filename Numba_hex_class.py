@@ -1,4 +1,4 @@
-from random import choice
+from random import randint
 
 import numpy as np
 from numba import int64, njit, typed, types
@@ -41,7 +41,7 @@ spec = [
 ]
 
 
-@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)))
+@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)), nogil=True)
 def wht_nfind(x, wht_parent, wht_rank, wht_groups):
     if x not in wht_parent:
         wht_parent[x] = x
@@ -63,7 +63,7 @@ def wht_nfind(x, wht_parent, wht_rank, wht_groups):
     return wht_nfind(x, wht_parent, wht_rank, wht_groups)
 
 
-@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)))
+@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)), nogil=True)
 def blk_nfind(x, blk_parent, blk_rank, blk_groups):
     if x not in blk_parent:
         blk_parent[x] = x
@@ -85,7 +85,7 @@ def blk_nfind(x, blk_parent, blk_rank, blk_groups):
     return blk_nfind(x, blk_parent, blk_rank, blk_groups)
 
 
-@njit(int64[:](int64, int64))
+@njit(int64[:](int64, int64), nogil=True)
 def fetch_neighbours(cell, size):
     x = cell//size
     y = cell % size
@@ -260,18 +260,20 @@ class HexState:
         elif self.blk_find(self.EDGE_START) == self.blk_find(self.EDGE_FINISH):
             return 1
         else:
-            return None
+            return 0
 
     def get_board(self):
         return self.board
 
 
+@njit(nogil=True)
 def _simulate(n):
     for _ in range(n):
         board = HexState(6)
-        while board.winner() == None:
-            action = choice(board.possible_moves())
-            board.step(action)
+        while board.winner() == 0:
+            moves = board.possible_moves()
+            action_index = randint(0, moves.size-1)
+            board.step(moves[action_index])
 
         # from Hex_utils import visualize_board
         # print(board.winner())
@@ -282,7 +284,7 @@ def _simulate(n):
 def _main():
     from time import perf_counter
     a = perf_counter()
-    _simulate(10)
+    print(_simulate(10))
     print(perf_counter()-a)
 
     for i in range(10):
