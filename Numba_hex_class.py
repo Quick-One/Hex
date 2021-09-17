@@ -116,21 +116,56 @@ def fetch_neighbours(cell, size):
 @jitclass(spec)
 class HexState:
 
-    def __init__(self, size):
+    def __init__(self,
+                 size, 
+                 board,
+                 to_play,
+                 EDGE_START,
+                 EDGE_FINISH,
+                 blk_parent,
+                 blk_rank,
+                 blk_groups,
+                 wht_parent,
+                 wht_rank,
+                 wht_groups,
+                 ):
         self.size = size
-        self.board = np.zeros(size**2, dtype=np.int64)
-        self.to_play = 1
-        self.EDGE_START = 1000
-        self.EDGE_FINISH = -1000
+        self.board = board
+        self.to_play = to_play
+        self.EDGE_START = EDGE_START
+        self.EDGE_FINISH = EDGE_FINISH
 
-        self.blk_parent = typed.Dict.empty(*parent_type)
-        self.blk_rank = typed.Dict.empty(*rank_type)
-        self.blk_groups = typed.Dict.empty(*groups_type)
+        self.blk_parent = blk_parent
+        self.blk_rank = blk_rank
+        self.blk_groups = blk_groups
 
-        self.wht_parent = typed.Dict.empty(*parent_type)
-        self.wht_rank = typed.Dict.empty(*rank_type)
-        self.wht_groups = typed.Dict.empty(*groups_type)
+        self.wht_parent = wht_parent
+        self.wht_rank = wht_rank
+        self.wht_groups = wht_groups
 
+    def copy(self):
+        copy_blk_groups = typed.Dict.empty(*groups_type)
+        for key, value in self.blk_groups.items():
+            copy_blk_groups[key] = value.copy()
+            
+        copy_wht_groups = typed.Dict.empty(*groups_type)
+        for key, value in self.wht_groups.items():
+            copy_wht_groups[key] = value.copy()
+            
+        
+        
+        return HexState(self.size, 
+                        self.board.copy(), 
+                        self.to_play, 
+                        self.EDGE_START, 
+                        self.EDGE_FINISH, 
+                        self.blk_parent.copy(), 
+                        self.blk_rank.copy(), 
+                        copy_blk_groups, 
+                        self.wht_parent.copy(), 
+                        self.wht_rank.copy(), 
+                        copy_wht_groups)
+    
     def show_board(self):
         self.wht_groups[1] = np.zeros(0, dtype=np.int64)
         self.wht_groups[1] = np.append(self.wht_groups[1], 2)
@@ -142,7 +177,7 @@ class HexState:
     def blk_find(self, x):
         return blk_nfind(x, self.blk_parent, self.blk_rank, self.blk_groups)
 
-    def wht_find(self, x) -> int:
+    def wht_find(self, x):
         return wht_nfind(x, self.wht_parent, self.wht_rank, self.wht_groups)
 
     def blk_join(self, x, y):
@@ -265,15 +300,32 @@ class HexState:
     def get_board(self):
         return self.board
 
+    def get_to_play(self):
+        return self.to_play
 
-@njit(nogil=True)
+@njit(nogil = True)
 def _simulate(n):
     for _ in range(n):
-        board = HexState(6)
+        a = np.inf
+        brd = np.zeros(36, dtype=np.int64)
+        to_play = 1
+        EDGE_START = 1000
+        EDGE_FINISH = -1000
+        blk_parent = typed.Dict.empty(*parent_type)
+        blk_rank = typed.Dict.empty(*rank_type)
+        blk_groups = typed.Dict.empty(*groups_type)
+        wht_parent = typed.Dict.empty(*parent_type)
+        wht_rank = typed.Dict.empty(*rank_type)
+        wht_groups = typed.Dict.empty(*groups_type)
+        
+
+        board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH, blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
         while board.winner() == 0:
             moves = board.possible_moves()
             action_index = randint(0, moves.size-1)
             board.step(moves[action_index])
+
+        
 
         # from Hex_utils import visualize_board
         # print(board.winner())
@@ -284,7 +336,7 @@ def _simulate(n):
 def _main():
     from time import perf_counter
     a = perf_counter()
-    print(_simulate(10))
+    _simulate(10)
     print(perf_counter()-a)
 
     for i in range(10):
