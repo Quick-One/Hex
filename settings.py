@@ -1,6 +1,6 @@
 
 class game_settings:
-    player_1 = 'Agent'
+    player_1 = 'Human'
     player_2 = 'Agent'
     board_size = 6
     agent_time_control = 20
