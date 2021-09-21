@@ -303,10 +303,40 @@ class HexState:
     def get_to_play(self):
         return self.to_play
 
+    # def printer(self):
+    #     print(self.blk_parent)
+    #     print(self.blk_rank)
+    #     print(self.blk_groups)
+
+    # def dummy_operation(self):
+    #     for key in self.blk_groups:
+    #         val = self.blk_groups[key] + 100
+    #         self.blk_groups[key] = val
+    #     print(self.blk_groups)
+            
+def create_empty_board(size):
+    parent_type = (types.int64, types.int64)
+    rank_type = (types.int64, types.int64)
+    groups_type = (types.int64, types.int64[:])
+
+    brd = np.zeros(size**2, dtype=np.int64)
+    to_play = 1
+    EDGE_START = 1000
+    EDGE_FINISH = -1000
+    blk_parent = typed.Dict.empty(*parent_type)
+    blk_rank = typed.Dict.empty(*rank_type)
+    blk_groups = typed.Dict.empty(*groups_type)
+    wht_parent = typed.Dict.empty(*parent_type)
+    wht_rank = typed.Dict.empty(*rank_type)
+    wht_groups = typed.Dict.empty(*groups_type)
+
+    board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH, blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
+    return board
+
 @njit(nogil = True)
 def _simulate(n):
     for _ in range(n):
-        a = np.inf
+
         brd = np.zeros(36, dtype=np.int64)
         to_play = 1
         EDGE_START = 1000

@@ -36,6 +36,12 @@ def get_coords(index: tuple) -> tuple:
 
 
 def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, filter: np.ndarray = None):
+
+    # For 1D board format
+    if len(board.shape) == 1:
+        size = int((board.size)**(0.5))
+        board = board.reshape(size, size)
+
     size_row, size_column = board.shape
     coords = np.zeros((size_row, size_column), dtype=object)
 
@@ -238,6 +244,10 @@ def _main():
     visualize_board(board, order)
 
     print(hex_IsTerminal(board, 6, 1))
+
+
+def intmove_to_tupl(move: int, size: int) -> tuple:
+    return (move//size, move % size)
 
 
 if __name__ == '__main__':
