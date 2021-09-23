@@ -333,8 +333,10 @@ def create_empty_board(size):
     board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH, blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
     return board
 
-@njit(nogil = True)
+@njit
 def _simulate(n):
+    # blk_win = 0
+    # wht_win = 0
     for _ in range(n):
 
         brd = np.zeros(36, dtype=np.int64)
@@ -354,6 +356,13 @@ def _simulate(n):
             moves = board.possible_moves()
             action_index = randint(0, moves.size-1)
             board.step(moves[action_index])
+        win  = board.winner()
+    #     if win == 1:
+    #         blk_win += 1
+    #     else:
+    #         wht_win += 1
+            
+    # print(blk_win, wht_win)
 
         
 

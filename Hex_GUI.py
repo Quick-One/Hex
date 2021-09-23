@@ -6,6 +6,8 @@ import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
 
 import agent
+import Numba_hex_class
+from Hex_utils import intmove_to_tupl, tuplemove_to_int
 from Hex_class import GuiHexState, HexState
 from settings import board_settings, game_settings
 
@@ -75,13 +77,14 @@ class GUI_element:
 
 class GUI():
 
-    def __init__(self, game: GuiHexState, agent_game: HexState, player1: str, player2: str,
+    def __init__(self, game: GuiHexState, agent_game: HexState, numba_agent_game, player1: str, player2: str,
                  CIRCUMRADIUS: int = board_settings.CIRCUMRADIUS,
                  INRADIUS: int = board_settings.INRADIUS,
                  BOARD_OFFSET: int = board_settings.BOARD_OFFSET,
                  LABEL_OFFSET: int = board_settings.LABEL_OFFSET):
         self.game = game
         self.agent_game = agent_game
+        self.numba_agent_game = numba_agent_game
         self.board_size = game.size
         self.fig, self.ax = plt.subplots()
         self.ax.axis('off')
@@ -250,7 +253,8 @@ class GUI():
         '''
         Gets agent's move. 
         '''
-        return agent.best_move(self.agent_game)
+        # return agent.best_move(self.agent_game)
+        return agent.numba_best_move(self.numba_agent_game)
 
     def simulate_game(self) -> None:
         '''
@@ -278,6 +282,7 @@ class GUI():
 
             self.game.step(move)
             self.agent_game.step(move)
+            self.numba_agent_game.step(tuplemove_to_int(move, self.board_size))
             self.place_piece(move, turn)
             self.refresh()
 
@@ -346,7 +351,8 @@ class GUI():
 def _main():
     game = GuiHexState(size=game_settings.board_size)
     agent_game = HexState(size=game_settings.board_size)
-    gui = GUI(game, agent_game, game_settings.player_1, game_settings.player_2)
+    numba_agent_game = Numba_hex_class.create_empty_board(game_settings.board_size)
+    gui = GUI(game, agent_game,numba_agent_game, game_settings.player_1, game_settings.player_2)
     gui.render_coords()
     gui.render_board()
     gui.render_labels()

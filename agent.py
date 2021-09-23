@@ -1,7 +1,6 @@
-import numpy as np
-from random import choice
-
+from Hex_utils import intmove_to_tupl
 from rave_class import MCTSAgent
+import numba_rave
 
 from time import perf_counter
 # def best_move(board) -> tuple:
@@ -19,3 +18,18 @@ def best_move(board):
     print("Elapsed time during the whole program in seconds:",
                                         t1_stop-t1_start)
     return agent.best_move()
+
+def numba_best_move(board):
+    size = board.size
+    
+    t1_start = perf_counter()
+    
+    best_move = numba_rave.fetch_best_move(board, 100000)
+    
+    
+    t1_stop = perf_counter()
+    print("Elapsed time during the whole program in seconds:",
+                                        t1_stop-t1_start)
+    
+    best_move = intmove_to_tupl(best_move, size)
+    return best_move

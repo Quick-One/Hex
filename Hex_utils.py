@@ -249,6 +249,10 @@ def _main():
 def intmove_to_tupl(move: int, size: int) -> tuple:
     return (move//size, move % size)
 
+def tuplemove_to_int(move: tuple, size: int) -> int:
+    x,y = move
+    return x*size + y
+
 
 if __name__ == '__main__':
     _main()
