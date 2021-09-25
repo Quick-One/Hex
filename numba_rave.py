@@ -1,4 +1,3 @@
-from numba.core.utils import benchmark
 from settings import game_settings
 from Numba_hex_class import _simulate, create_empty_board
 from random import randint
