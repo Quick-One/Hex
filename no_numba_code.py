@@ -1,6 +1,7 @@
 from random import randint
 
 import numpy as np
+from Hex_utils import intmove_to_tupl
 
 from settings import game_settings
 from math import sqrt, log
@@ -319,19 +320,13 @@ class Node:
         self.N_rave = 0
         self.Q_rave = 0
 
-    def value(self):
+    def value(self, turn):
         if self.N == 0:
-            return float('inf')
+            return 1000
 
-        rave_weight = max(0, 1 - (self.N/300))
-        UCT_value = (self.Q/self.N) + 0.5 * sqrt(2 * log(self.parent.N/self.N))
-        if self.N_rave != 0:
-            rave_value = self.Q_rave/self.N_rave
-        else:
-            rave_value = 0
-        value = (1 - rave_weight)*UCT_value + rave_weight*rave_value
-
-        return value
+        Q = turn*self.Q
+        UCT_value = (Q/self.N) + 0.5 * sqrt(2 * log(self.parent.N/self.N))
+        return UCT_value
 
     def set_children(self, new_children):
         self.children = np.append(self.children, new_children)
@@ -373,7 +368,7 @@ def leaf_node(root_node: Node, root_state, mem, mem_addrs):
 
         for child_mem_addrs in node.children:
             child = mem[child_mem_addrs]
-            value_of_child = child.value()
+            value_of_child = child.value(state.to_play)
 
             if value_of_child > benchmark:
                 benchmark = value_of_child
@@ -412,43 +407,13 @@ def rollout(state):
         state.step(move)
         moves = np.delete(moves, move_index)
 
-    blk_rave_pieces = np.zeros(0, dtype=np.int64)
-    wht_rave_pieces = np.zeros(0, dtype=np.int64)
+    return state.winner()
 
-    board = state.get_board()
-    blk_rave_pieces = np.append(blk_rave_pieces, np.where(board == 1)[0])
-    wht_rave_pieces = np.append(wht_rave_pieces, np.where(board == -1)[0])
-
-    return (state.winner(), blk_rave_pieces, wht_rave_pieces)
-
-def backup(outcome, turn, node, blk_rave_pieces, wht_rave_pieces, mem):
-
-    if outcome == turn:
-        reward = -1
-    else:
-        reward = 1
+def backup(outcome, node):
 
     while node is not None:
-        if turn == -1:
-            for child_addrs in node.children:
-                child = mem[child_addrs]
-
-                if child.move in wht_rave_pieces:
-                    child.N_rave += 1
-                    child.Q_rave += -reward
-        else:
-            for child_addrs in node.children:
-                child = mem[child_addrs]
-
-                if child.move in blk_rave_pieces:
-                    child.N_rave += 1
-                    child.Q_rave += -reward
-
         node.N += 1
-        node.Q += reward
-
-        turn = -turn
-        reward = -reward
+        node.Q += outcome
         node = node.parent
 
 def fetch_best_move(state, limit):
@@ -469,38 +434,40 @@ def fetch_best_move(state, limit):
 
         node, new_state, memory_address = leaf_node(
             root_node, state_copy, memory, memory_address)
-        turn = new_state.to_play
-        winner, blk_rave_pieces, wht_rave_pieces = rollout(new_state)
+        winner = rollout(new_state)
 
         if new_state.winner() == 1:
             blk += 1
         else:
             wht += 1
 
-        backup(winner, turn, node, blk_rave_pieces, wht_rave_pieces, memory)
+        backup(winner,node)
 
         num_simulation += 1
+    print(len(memory))
+    # array = np.zeros(0, dtype=np.int64)
+    # benchmark = float('-inf')
     
-    array = np.zeros(0, dtype=np.int64)
-    benchmark = float('-inf')
-    
+    # for child_mem_addrs in root_node.children:
+    #     child = memory[child_mem_addrs]
+    #     value_of_child = child.QbyN()
+
+
+    #     if value_of_child > benchmark:
+    #         benchmark = value_of_child
+    #         array = np.zeros(0, np.int64)
+    #         array = np.append(array, child_mem_addrs)
+
+    #     elif value_of_child == benchmark:
+    #         array = np.append(array, child_mem_addrs)
+
+    # selected_index_from_array = randint(0, array.size-1)
+    # node = memory[array[selected_index_from_array]]
+    # move = node.move
+    # return move
     for child_mem_addrs in root_node.children:
         child = memory[child_mem_addrs]
-        value_of_child = child.QbyN()
-
-
-        if value_of_child > benchmark:
-            benchmark = value_of_child
-            array = np.zeros(0, np.int64)
-            array = np.append(array, child_mem_addrs)
-
-        elif value_of_child == benchmark:
-            array = np.append(array, child_mem_addrs)
-
-    selected_index_from_array = randint(0, array.size-1)
-    node = memory[array[selected_index_from_array]]
-    move = node.move
-    return move
+        print(child.N, child.value(root_state.to_play),intmove_to_tupl(child.move, root_state.size))
 
 board = create_empty_board(game_settings.board_size)
 

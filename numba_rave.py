@@ -36,18 +36,22 @@ class Node:
         self.N_rave = 0
         self.Q_rave = 0
 
-    def value(self):
+    def value(self, turn):
         if self.N == 0:
             return float64(100000)
 
-        rave_weight = max(0, 1 - (self.N/300))
-        UCT_value = (self.Q/self.N) + 0.5 * sqrt(2 * log(self.parent.N/self.N))
+        Q_rave = self.Q_rave * turn
+        Q = self.Q * turn
+
+        rave_weight = max(0, 1 - (self.N_rave/300))
         if self.N_rave != 0:
-            rave_value = self.Q_rave/self.N_rave
+            rave_value = Q_rave/self.N_rave
         else:
             rave_value = 0
-        value = (1 - rave_weight)*UCT_value + rave_weight*rave_value
 
+        UCT_value = (Q/self.N) + 0.5 * sqrt(2 * log(self.parent.N/self.N))
+
+        value = (1 - rave_weight)*UCT_value + rave_weight*rave_value
         return float64(value)
 
     def set_children(self, new_children):
@@ -56,12 +60,13 @@ class Node:
     def get_stats(self):
         print(
             f'N:{self.N}, Q:{self.Q}, Q_r:{self.Q_rave}, N_r:{self.N_rave}, M:{self.move}')
-        print(self.value())
+        # print(self.value())
 
-    def QbyN(self):
-        return self.Q/self.N
+    def QbyN(self, turn):
+        # Q = self.Q * turn
+        return self.N
 
-    
+
 Node_type.define(Node.class_type.instance_type)
 
 # EXPAND
@@ -101,7 +106,7 @@ def leaf_node(root_node: Node, root_state, mem, mem_addrs):
 
         for child_mem_addrs in node.children:
             child = mem[child_mem_addrs]
-            value_of_child = child.value()
+            value_of_child = child.value(state.to_play)
 
             if value_of_child > benchmark:
                 benchmark = value_of_child
@@ -144,47 +149,36 @@ def rollout(state):
         state.step(move)
         moves = np.delete(moves, move_index)
 
-    blk_rave_pieces = np.zeros(0, dtype=np.int64)
-    wht_rave_pieces = np.zeros(0, dtype=np.int64)
-
     board = state.get_board()
-    blk_rave_pieces = np.append(blk_rave_pieces, np.where(board == 1)[0])
-    wht_rave_pieces = np.append(wht_rave_pieces, np.where(board == -1)[0])
-
+    blk_rave_pieces = np.where(board == 1)[0]
+    wht_rave_pieces = np.where(board == -1)[0]
+    
     return (state.winner(), blk_rave_pieces, wht_rave_pieces)
 
 # BACKUP
 
 
 @njit
-def backup(outcome, turn, node, blk_rave_pieces, wht_rave_pieces, mem):
-
-    if outcome == turn:
-        reward = -1
-    else:
-        reward = 1
+def backup(outcome, node, turn, blk_rave_pieces, wht_rave_pieces, mem):
 
     while node is not None:
-        if turn == -1:
-            for child_addrs in node.children:
-                child = mem[child_addrs]
-
-                if child.move in wht_rave_pieces:
-                    child.N_rave += 1
-                    child.Q_rave += -reward
-        else:
-            for child_addrs in node.children:
-                child = mem[child_addrs]
-
-                if child.move in blk_rave_pieces:
-                    child.N_rave += 1
-                    child.Q_rave += -reward
-
         node.N += 1
-        node.Q += reward
+        node.Q += outcome
 
+        if turn == 1:
+            rave_pieces = blk_rave_pieces
+        else:
+            rave_pieces = wht_rave_pieces
+        
+        if node.parent is not None:
+            for sibling_addrs in node.parent.children:
+                sibling = mem[sibling_addrs]
+                sibling_move = sibling.move
+                if sibling_move in rave_pieces:
+                    sibling.Q_rave += outcome
+                    sibling.N_rave += 1
+        
         turn = -turn
-        reward = -reward
         node = node.parent
 
 # fetch_best_move
@@ -209,25 +203,26 @@ def fetch_best_move(state, limit):
 
         node, new_state, memory_address = leaf_node(
             root_node, state_copy, memory, memory_address)
-        turn = new_state.to_play
-        winner, blk_rave_pieces, wht_rave_pieces = rollout(new_state)
+        turn = -new_state.to_play
+        winner, blk_rave, wht_rave = rollout(new_state)
 
         if new_state.winner() == 1:
             blk += 1
         else:
             wht += 1
 
-        backup(winner, turn, node, blk_rave_pieces, wht_rave_pieces, memory)
+        backup(winner, node, turn, blk_rave, wht_rave, memory)
 
         num_simulation += 1
     print(blk, wht)
-    
+
     array = np.zeros(0, dtype=np.int64)
     benchmark = float64(-1000000)
-    
+
     for child_mem_addrs in root_node.children:
         child = memory[child_mem_addrs]
-        value_of_child = child.QbyN()
+        value_of_child = child.QbyN(root_state.to_play)
+        child.get_stats()
 
         if value_of_child > benchmark:
             benchmark = value_of_child
@@ -240,13 +235,20 @@ def fetch_best_move(state, limit):
     selected_index_from_array = randint(0, array.size-1)
     node = memory[array[selected_index_from_array]]
     move = node.move
+    root_node.get_stats()
     return move
-    
+
 
 
 # Compiling JIT classes and functions
-_simulate(100)
+_simulate(100, game_settings.board_size)
 print('compiled board class')
 board = create_empty_board(game_settings.board_size)
-fetch_best_move(board, 1000)
+print(fetch_best_move(board, 1000))
 print('compiled rave functions')
+
+
+# from time import perf_counter
+# start = perf_counter()
+# print(fetch_best_move(board, 50000))
+# print(perf_counter()-start)

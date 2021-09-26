@@ -334,12 +334,12 @@ def create_empty_board(size):
     return board
 
 @njit
-def _simulate(n):
+def _simulate(n, size):
     # blk_win = 0
     # wht_win = 0
     for _ in range(n):
 
-        brd = np.zeros(36, dtype=np.int64)
+        brd = np.zeros(size**2, dtype=np.int64)
         to_play = 1
         EDGE_START = 1000
         EDGE_FINISH = -1000
@@ -375,12 +375,12 @@ def _simulate(n):
 def _main():
     from time import perf_counter
     a = perf_counter()
-    _simulate(10)
+    _simulate(10, size)
     print(perf_counter()-a)
 
     for i in range(10):
         a = perf_counter()
-        _simulate(10000)
+        _simulate(10000, size)
         print(i, perf_counter()-a)
 
 

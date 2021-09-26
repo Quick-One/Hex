@@ -55,7 +55,7 @@ class Node:
         if self.N == 0:
             return 0 if explore == 0 else float('inf')
         else:
-            rave_weight = max(0, 1 - (self.N/RAVE_constants.rave_const))
+            rave_weight = max(0, 1 - (self.N_rave/RAVE_constants.rave_const))
             UCT_value = self.Q/self.N + explore*sqrt(2 * log(self.parent.N/self.N))
             rave_value = self.Q_rave/self.N_rave if self.N_rave != 0 else 0
             
