@@ -1,4 +1,5 @@
 from random import randint
+from time import perf_counter
 
 import numpy as np
 from numba import int64, njit, typed, types
@@ -41,7 +42,7 @@ spec = [
 ]
 
 
-@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)), nogil=True)
+@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)))
 def wht_nfind(x, wht_parent, wht_rank, wht_groups):
     if x not in wht_parent:
         wht_parent[x] = x
@@ -63,7 +64,7 @@ def wht_nfind(x, wht_parent, wht_rank, wht_groups):
     return wht_nfind(x, wht_parent, wht_rank, wht_groups)
 
 
-@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)), nogil=True)
+@njit(int64(int64, types.DictType(*parent_type), types.DictType(*rank_type), types.DictType(*groups_type)))
 def blk_nfind(x, blk_parent, blk_rank, blk_groups):
     if x not in blk_parent:
         blk_parent[x] = x
@@ -85,7 +86,7 @@ def blk_nfind(x, blk_parent, blk_rank, blk_groups):
     return blk_nfind(x, blk_parent, blk_rank, blk_groups)
 
 
-@njit(int64[:](int64, int64), nogil=True)
+@njit(int64[:](int64, int64))
 def fetch_neighbours(cell, size):
     x = cell//size
     y = cell % size
@@ -117,7 +118,7 @@ def fetch_neighbours(cell, size):
 class HexState:
 
     def __init__(self,
-                 size, 
+                 size,
                  board,
                  to_play,
                  EDGE_START,
@@ -147,25 +148,23 @@ class HexState:
         copy_blk_groups = typed.Dict.empty(*groups_type)
         for key, value in self.blk_groups.items():
             copy_blk_groups[key] = value.copy()
-            
+
         copy_wht_groups = typed.Dict.empty(*groups_type)
         for key, value in self.wht_groups.items():
             copy_wht_groups[key] = value.copy()
-            
-        
-        
-        return HexState(self.size, 
-                        self.board.copy(), 
-                        self.to_play, 
-                        self.EDGE_START, 
-                        self.EDGE_FINISH, 
-                        self.blk_parent.copy(), 
-                        self.blk_rank.copy(), 
-                        copy_blk_groups, 
-                        self.wht_parent.copy(), 
-                        self.wht_rank.copy(), 
+
+        return HexState(self.size,
+                        self.board.copy(),
+                        self.to_play,
+                        self.EDGE_START,
+                        self.EDGE_FINISH,
+                        self.blk_parent.copy(),
+                        self.blk_rank.copy(),
+                        copy_blk_groups,
+                        self.wht_parent.copy(),
+                        self.wht_rank.copy(),
                         copy_wht_groups)
-    
+
     def show_board(self):
         self.wht_groups[1] = np.zeros(0, dtype=np.int64)
         self.wht_groups[1] = np.append(self.wht_groups[1], 2)
@@ -277,7 +276,6 @@ class HexState:
                     self.wht_join(neighbour, cell)
 
     def step(self, cell):
-
         if self.to_play == 1:
             self.place_stone(cell, 1)
             self.to_play = -1
@@ -288,7 +286,7 @@ class HexState:
     def winner(self):
         """
         Return a number corresponding to the winning player,
-        or none if the game is not over.
+        or 0 if the game is not over.
         """
         if self.wht_find(self.EDGE_START) == self.wht_find(self.EDGE_FINISH):
             return -1
@@ -297,24 +295,12 @@ class HexState:
         else:
             return 0
 
-    def get_board(self):
-        return self.board
 
-    def get_to_play(self):
-        return self.to_play
-
-    # def printer(self):
-    #     print(self.blk_parent)
-    #     print(self.blk_rank)
-    #     print(self.blk_groups)
-
-    # def dummy_operation(self):
-    #     for key in self.blk_groups:
-    #         val = self.blk_groups[key] + 100
-    #         self.blk_groups[key] = val
-    #     print(self.blk_groups)
-            
 def create_empty_board(size):
+    '''
+    Initialises and returns a numba HexState.
+    '''
+
     parent_type = (types.int64, types.int64)
     rank_type = (types.int64, types.int64)
     groups_type = (types.int64, types.int64[:])
@@ -330,13 +316,13 @@ def create_empty_board(size):
     wht_rank = typed.Dict.empty(*rank_type)
     wht_groups = typed.Dict.empty(*groups_type)
 
-    board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH, blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
+    board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH,
+                     blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
     return board
 
+
 @njit
-def _simulate(n, size):
-    # blk_win = 0
-    # wht_win = 0
+def _compile_board(n, size):
     for _ in range(n):
 
         brd = np.zeros(size**2, dtype=np.int64)
@@ -349,42 +335,34 @@ def _simulate(n, size):
         wht_parent = typed.Dict.empty(*parent_type)
         wht_rank = typed.Dict.empty(*rank_type)
         wht_groups = typed.Dict.empty(*groups_type)
-        
 
-        board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH, blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
+        board = HexState(size, brd, to_play, EDGE_START, EDGE_FINISH,
+                         blk_parent, blk_rank, blk_groups, wht_parent, wht_rank, wht_groups)
         while board.winner() == 0:
             moves = board.possible_moves()
             action_index = randint(0, moves.size-1)
             board.step(moves[action_index])
-        win  = board.winner()
-    #     if win == 1:
-    #         blk_win += 1
-    #     else:
-    #         wht_win += 1
-            
-    # print(blk_win, wht_win)
 
-        
 
-        # from Hex_utils import visualize_board
-        # print(board.winner())
-        # d = board.get_board()
-        # visualize_board(d.reshape(6,6))
+def compile_board(n, size):
+    start = perf_counter()
+    _compile_board(n, size)
+    print(f'Compiled numba HexClass in {(perf_counter()-start):.3f}s.')
 
 
 def _main():
-    from time import perf_counter
-    a = perf_counter()
-    _simulate(10, size)
-    print(perf_counter()-a)
+    '''
+    Does 10000 random game simulations.
+    '''
+    start = perf_counter()
+    _compile_board(10, size)
+    print(f'First compile time: {(perf_counter()-start):.3f}s')
 
-    for i in range(10):
-        a = perf_counter()
-        _simulate(10000, size)
-        print(i, perf_counter()-a)
+    for i in range(1, 10):
+        start = perf_counter()
+        _compile_board(10000, size)
+        print(f'{i}. Time taken: {(perf_counter()-start):.3f}s')
 
 
 if __name__ == '__main__':
     _main()
-    # _simulate(10)
-    pass

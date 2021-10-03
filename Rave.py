@@ -1,4 +1,3 @@
-from numpy import numarray
 from Hex_class import HexState
 from config import RAVE_constants
 from math import sqrt, log
@@ -38,17 +37,15 @@ class Node:
     def __init__(self, move: tuple = None, parent = None):
         self.parent = parent
         self.move = move
-        #move : Node()
         self.children = []
 
         self.N = 0
         self.Q = 0
-
         self.N_rave = 0
         self.Q_rave = 0
 
     def get_value(self):
-        return self.Q/self.N
+        return self.N
 
     @property
     def value(self, explore = RAVE_constants.explore):
@@ -184,12 +181,3 @@ class MCTSAgent:
                 max_children.append(child_node)
 
         return choice(max_children).move
-
-
-# board = HexState(6)
-# board.step((1, 1))
-# agent = MCTSAgent(board)
-# agent.search()
-
-# for child in agent.root_node.children:
-#     print(f"value: {child.value}; N: {child.N}; Q: {child.Q}; N_r: {child.N_rave}; Q_r: {child.Q_rave} move: {child.move}")
