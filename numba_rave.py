@@ -1,6 +1,7 @@
 from settings import game_settings
-from Numba_hex_class import _simulate, create_empty_board
+from Numba_hex_class import create_empty_board
 from random import randint
+from time import perf_counter
 from math import sqrt, log
 from numba import njit
 from numba import int64, deferred_type, optional, float64
@@ -69,8 +70,6 @@ class Node:
 
 Node_type.define(Node.class_type.instance_type)
 
-# EXPAND
-
 
 @njit
 def expand(parent: Node, state, mem, mem_address):
@@ -89,8 +88,6 @@ def expand(parent: Node, state, mem, mem_address):
 
     parent.set_children(children)
     return (1, mem_address)
-
-# lead node
 
 
 @njit
@@ -135,8 +132,6 @@ def leaf_node(root_node: Node, root_state, mem, mem_addrs):
 
     return (node, state, mem_addrs)
 
-# rollout
-
 
 @njit
 def rollout(state):
@@ -149,13 +144,11 @@ def rollout(state):
         state.step(move)
         moves = np.delete(moves, move_index)
 
-    board = state.get_board()
+    board = state.board
     blk_rave_pieces = np.where(board == 1)[0]
     wht_rave_pieces = np.where(board == -1)[0]
-    
-    return (state.winner(), blk_rave_pieces, wht_rave_pieces)
 
-# BACKUP
+    return (state.winner(), blk_rave_pieces, wht_rave_pieces)
 
 
 @njit
@@ -169,7 +162,7 @@ def backup(outcome, node, turn, blk_rave_pieces, wht_rave_pieces, mem):
             rave_pieces = blk_rave_pieces
         else:
             rave_pieces = wht_rave_pieces
-        
+
         if node.parent is not None:
             for sibling_addrs in node.parent.children:
                 sibling = mem[sibling_addrs]
@@ -177,11 +170,9 @@ def backup(outcome, node, turn, blk_rave_pieces, wht_rave_pieces, mem):
                 if sibling_move in rave_pieces:
                     sibling.Q_rave += outcome
                     sibling.N_rave += 1
-        
+
         turn = -turn
         node = node.parent
-
-# fetch_best_move
 
 
 @njit
@@ -238,17 +229,8 @@ def fetch_best_move(state, limit):
     root_node.get_stats()
     return move
 
-
-
-# Compiling JIT classes and functions
-_simulate(100, game_settings.board_size)
-print('compiled board class')
-board = create_empty_board(game_settings.board_size)
-print(fetch_best_move(board, 1000))
-print('compiled rave functions')
-
-
-# from time import perf_counter
-# start = perf_counter()
-# print(fetch_best_move(board, 50000))
-# print(perf_counter()-start)
+def compile_RAVE(n):
+    start = perf_counter()
+    board = create_empty_board(game_settings.board_size)
+    fetch_best_move(board, n)
+    print(f'Compiled numba MCTS_RAVE in {(perf_counter()-start):.3f}s.')

@@ -1,6 +1,6 @@
 from Hex_utils import intmove_to_tupl
-from rave_class import MCTSAgent
-import numba_rave
+from Rave import MCTSAgent
+import Numba_rave
 
 from time import perf_counter
 # def best_move(board) -> tuple:
@@ -24,7 +24,7 @@ def numba_best_move(board):
     
     t1_start = perf_counter()
     
-    best_move = numba_rave.fetch_best_move(board, 100000)
+    best_move = Numba_rave.fetch_best_move(board, 100000)
     
     
     t1_stop = perf_counter()
