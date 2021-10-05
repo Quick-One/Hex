@@ -1,9 +1,8 @@
 
 class game_settings:
-    player_1 = 'Agent'
+    player_1 = 'Human'
     player_2 = 'Agent'
     board_size = 6
-    agent_time_control = 20
 
 
 class board_settings:
@@ -11,3 +10,17 @@ class board_settings:
     INRADIUS = 0.6
     BOARD_OFFSET = 3
     LABEL_OFFSET = 0.7
+
+
+class py_agent_settings:
+    time_control = None
+    num_rollout = None
+
+
+class Numba_agent_settings:
+    num_rollouts = 50_000
+
+
+class RAVE_constants:
+    rave_const = 300
+    explore = 0.5

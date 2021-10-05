@@ -35,7 +35,13 @@ def get_coords(index: tuple) -> tuple:
     return ((i+j)*iplusj_multiplier, (j-i)*jminusi_multiplier)
 
 
-def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, filter: np.ndarray = None):
+def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, filter: np.ndarray = None, heatmap: dict = None):
+
+    # For 1D board format
+    if len(board.shape) == 1:
+        size = int((board.size)**(0.5))
+        board = board.reshape(size, size)
+
     size_row, size_column = board.shape
     coords = np.zeros((size_row, size_column), dtype=object)
 
@@ -48,6 +54,8 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
         move_matrix = np.zeros((size_row, size_column), int)
         for move_number, move_coordinate in enumerate(moves_order, 1):
             move_matrix[move_coordinate] = move_number
+
+    hexagonal_tiles = np.zeros((size_row, size_column), dtype=object)
 
     ax = plt.axes()
     ax.set_aspect('equal')
@@ -103,7 +111,7 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
             else:
                 hexagon = RegularPolygon((coord_x, coord_y), numVertices=6, radius=circumradius,
                                          facecolor='1', edgecolor='darkgrey', linewidth='1.5', orientation=piby6)
-
+        hexagonal_tiles[i, j] = hexagon
         ax.add_patch(hexagon)
 
         # ADD PIECE
@@ -130,6 +138,17 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
 
     plt.axis('off')
     plt.autoscale(enable=True)
+    if heatmap is not None:
+        total_n = sum(heatmap.values())
+        for key, value in heatmap.items():
+            move = intmove_to_tupl(key, size_column)
+            color_heat = 1 - (value/total_n)
+
+            if np.sum(board) == 0:
+                col = (color_heat, color_heat, 1)
+            else:
+                col = (1, color_heat, color_heat)
+            hexagonal_tiles[move].set_facecolor(col)
 
     if filename != None:
         plt.savefig(f'game_{str(filename)}.png', bbox_inches='tight')
@@ -235,9 +254,27 @@ def _main():
     board[0][1] = -1
     board[1][2] = 1
     order = [(0, 0), (0, 1), (1, 2)]
-    visualize_board(board, order)
+    heat = {25: 30, 26: 30, 32: 100}
+    visualize_board(board, order, heatmap=heat)
 
     print(hex_IsTerminal(board, 6, 1))
+
+
+def intmove_to_tupl(move: int, size: int) -> tuple:
+    return (move//size, move % size)
+
+
+def tuplemove_to_int(move: tuple, size: int) -> int:
+    x, y = move
+    return x*size + y
+
+
+def move_to_string(move: tuple) -> str:
+    """
+    Returns the coordinate in '$#' form where $ - letter and # - digit.
+    """
+    i, j = move
+    return f"{ascii_letters[j]}{i+1}"
 
 
 if __name__ == '__main__':

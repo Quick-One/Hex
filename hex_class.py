@@ -5,7 +5,7 @@ from string import ascii_letters
 
 import numpy as np
 
-from Hex_utils import visualize_board
+from hex_utils import visualize_board
 from unionfind import UnionFind
 
 # STATIC VARIABLES
@@ -76,7 +76,7 @@ class HexState:
             self.place_stone(cell, WHITE, 1)
             self.to_play = BLACK
 
-    def place_stone(self, cell, player, coord_index):
+    def place_stone(self, cell, player, coord_index) -> None:
         """
         Places a stone.
         coord_index = 0; corresponds to row. Assign this for checking connection from top to bottom.
@@ -211,8 +211,11 @@ class GuiHexState(HexState):
         return shortest_path
 
 
-def _main(visualise=True):
-
+def _main(visualise=True) -> None:
+    '''
+    Plays a random game of hex.
+    if visualise is True then board is drawn via GUI.
+    '''
     board = GuiHexState(6)
     while board.winner == None:
         action = choice(board.possible_actions())
@@ -224,7 +227,7 @@ def _main(visualise=True):
 
     print(board.board)
     if visualise:
-        visualize_board(board.board)
+        visualize_board(board.board, board.get_move_history())
 
 
 if __name__ == '__main__':

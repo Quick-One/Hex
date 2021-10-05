@@ -1,16 +1,25 @@
 from platform import system
 from string import ascii_letters
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
 
-import agent
-from Hex_class import GuiHexState
-from settings import board_settings, game_settings
+from hex_agents import HexAgents
+from hex_class import GuiHexState, HexState
+from hex_utils import intmove_to_tupl, tuplemove_to_int
+from settings import (Numba_agent_settings, board_settings, game_settings,
+                      py_agent_settings)
+
+# Removes icons from mpl window
+mpl.rcParams['toolbar'] = 'None'
 
 
 class GUI_element:
+    '''
+    Class to customise GUI elements like board and pieces.
+    '''
 
     @staticmethod
     def Black_board_piece(xy: list):
@@ -75,12 +84,18 @@ class GUI_element:
 
 class GUI():
 
-    def __init__(self, game: GuiHexState, player1: str, player2: str,
+    def __init__(self, game: GuiHexState,
+                 agent_game: HexState,
+                 player1: str, player2: str,
+                 numba_agent_game=None,
+                 heatmap=False,
                  CIRCUMRADIUS: int = board_settings.CIRCUMRADIUS,
                  INRADIUS: int = board_settings.INRADIUS,
                  BOARD_OFFSET: int = board_settings.BOARD_OFFSET,
                  LABEL_OFFSET: int = board_settings.LABEL_OFFSET):
         self.game = game
+        self.agent_game = agent_game
+        self.numba_agent_game = numba_agent_game
         self.board_size = game.size
         self.fig, self.ax = plt.subplots()
         self.ax.axis('off')
@@ -98,8 +113,25 @@ class GUI():
         self.INRADIUS = INRADIUS
         self.BOARD_OFFSET = BOARD_OFFSET
         self.LABEL_OFFSET = LABEL_OFFSET
+        self.heatmap = heatmap
 
-    def show(self, fullscreen = True) -> None:
+    def configure_mpl_window(self) -> None:
+        '''
+        1. Sets matplotlib window label. 
+        2. Sets icon to hex.ico 
+        '''
+        try:
+            self.fig.canvas.set_window_title('HEX')
+        except Exception as e:
+            pass
+
+        try:
+            thismanager = plt.get_current_fig_manager()
+            thismanager.window.wm_iconbitmap("hex.ico")
+        except Exception as e:
+            pass
+
+    def show(self, fullscreen=True) -> None:
         '''
         Shows the main GUI window.
         '''
@@ -218,6 +250,30 @@ class GUI():
                 return (True, (i, j))
         return (False, None)
 
+    def generate_heatmap(self, heatmap, filename):
+        total_n = sum(heatmap.values())
+        initial_color = self.hexagonal_tiles[0, 0].get_facecolor()
+        tiles_changed = []
+
+        for key, value in heatmap.items():
+            if isinstance(key, int):
+                move = intmove_to_tupl(key, self.board_size)
+            tiles_changed.append(move)
+
+            # color_heat = 1 - (value/total_n)
+            color_heat = (1/(1 + np.exp(-(1-(value/total_n)))))
+            print(move, color_heat)
+
+            if self.game.to_play == -1:
+                col = (color_heat, color_heat, 1)
+            else:
+                col = (1, color_heat, color_heat)
+            self.hexagonal_tiles[move].set_facecolor(col)
+        plt.savefig(f'game_{str(filename)}.png', bbox_inches='tight')
+
+        for move in tiles_changed:
+            self.hexagonal_tiles[move].set_facecolor(initial_color)
+
     def get_human_move(self, turn: int) -> tuple:
         '''
         Gets human move from the GUI.
@@ -249,7 +305,14 @@ class GUI():
         '''
         Gets agent's move. 
         '''
-        return agent.best_move(self.game.board)
+        if self.numba_agent_game is not None:
+            move, heatmap = HexAgents.numba_MCTS_RAVE(
+                self.numba_agent_game, Numba_agent_settings.num_rollouts)
+        else:
+            return HexAgents.MCTS_RAVE(self.agent_game, py_agent_settings.num_rollout, py_agent_settings.time_control)
+        if self.heatmap:
+            self.generate_heatmap(heatmap, 1)
+        return move
 
     def simulate_game(self) -> None:
         '''
@@ -276,6 +339,10 @@ class GUI():
                 move = self.get_agent_move()
 
             self.game.step(move)
+            self.agent_game.step(move)
+            if self.numba_agent_game is not None:
+                self.numba_agent_game.step(
+                    tuplemove_to_int(move, self.board_size))
             self.place_piece(move, turn)
             self.refresh()
 
@@ -343,12 +410,17 @@ class GUI():
 
 def _main():
     game = GuiHexState(size=game_settings.board_size)
-    gui = GUI(game, game_settings.player_1, game_settings.player_2)
+    agent_game = HexState(size=game_settings.board_size)
+    # numba_agent_game = Numba_hex_class.create_empty_board(
+    #     game_settings.board_size)
+    gui = GUI(game, agent_game, game_settings.player_1, game_settings.player_2)
+    # gui = GUI(game, agent_game, game_settings.player_1,
+    #           game_settings.player_2, numba_agent_game=numba_agent_game)
     gui.render_coords()
     gui.render_board()
     gui.render_labels()
     gui.render_tiles()
-    gui.show(fullscreen = False)
+    gui.show(fullscreen=False)
     gui.simulate_game()
     gui.render_game_end()
     input('Press ENTER to QUIT')
@@ -356,7 +428,6 @@ def _main():
 
 if __name__ == '__main__':
     _main()
-    pass
 
     # Code to generate call graph
     # from pycallgraph import PyCallGraph
