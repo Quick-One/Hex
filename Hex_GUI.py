@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
 
 from hex_agents import HexAgents
-from Hex_class import GuiHexState, HexState
+from hex_class import GuiHexState, HexState
 from hex_utils import tuplemove_to_int
 from settings import (Numba_agent_settings, board_settings, game_settings,
                       py_agent_settings)

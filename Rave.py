@@ -2,7 +2,7 @@ from copy import deepcopy
 from math import log, sqrt
 from random import choice
 
-from Hex_class import HexState
+from hex_class import HexState
 from settings import RAVE_constants
 
 """

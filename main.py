@@ -2,8 +2,8 @@ from argparse import ArgumentParser
 
 import numba_hex_class
 import numba_rave
-from Hex_class import GuiHexState, HexState
-from hex_GUI import GUI
+from hex_class import GuiHexState, HexState
+from hex_gui import GUI
 from settings import game_settings
 
 
