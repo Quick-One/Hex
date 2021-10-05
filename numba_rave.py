@@ -213,10 +213,13 @@ def fetch_best_move(state, limit):
 
     array = np.zeros(0, dtype=np.int64)
     benchmark = float64(-1000000)
+    heatmap_dict = {}
 
     for child_mem_addrs in root_node.children:
         child = memory[child_mem_addrs]
         value_of_child = child.QbyN(root_state.to_play)
+
+        heatmap_dict[child.move] = child.N
         # child.get_stats()
 
         if value_of_child > benchmark:
@@ -231,7 +234,7 @@ def fetch_best_move(state, limit):
     node = memory[array[selected_index_from_array]]
     move = node.move
     # root_node.get_stats()
-    return move
+    return move, heatmap_dict
 
 
 def compile_RAVE(n=1000):

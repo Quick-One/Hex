@@ -40,7 +40,7 @@ def main():
         numba_agent_game = numba_hex_class.create_empty_board(
             game_settings.board_size)
         gui = GUI(game, agent_game, game_settings.player_1,
-                  game_settings.player_2, numba_agent_game=numba_agent_game)
+                  game_settings.player_2, numba_agent_game=numba_agent_game, heatmap=False)
     else:
         print(f'{"_"*80}')
         print('Running non optimised MCTS_RAVE. To run optimised MCTS_RAVE run: ')

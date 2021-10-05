@@ -1,7 +1,7 @@
 
 class game_settings:
-    player_1 = 'Agent'
-    player_2 = 'Human'
+    player_1 = 'Human'
+    player_2 = 'Agent'
     board_size = 6
 
 
@@ -18,7 +18,7 @@ class py_agent_settings:
 
 
 class Numba_agent_settings:
-    num_rollouts = 100_000
+    num_rollouts = 50_000
 
 
 class RAVE_constants:

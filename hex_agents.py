@@ -22,9 +22,9 @@ class HexAgents:
     def numba_MCTS_RAVE(board, n_rollout: int = 100_000):
         size = board.size
         start = perf_counter()
-        best_move = numba_rave.fetch_best_move(board, n_rollout)
+        best_move, heatmap = numba_rave.fetch_best_move(board, n_rollout)
         best_move = intmove_to_tupl(best_move, size)
         print(
             f'Completed {n_rollout} rollouts in {(perf_counter()-start):.3f}s.')
         print(f'INFO: MCTS_RAVE plays {move_to_string(best_move)}.')
-        return best_move
+        return best_move, heatmap
