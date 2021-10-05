@@ -5,7 +5,7 @@ from string import ascii_letters
 
 import numpy as np
 
-from Hex_utils import visualize_board
+from hex_utils import visualize_board
 from unionfind import UnionFind
 
 # STATIC VARIABLES

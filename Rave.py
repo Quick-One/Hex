@@ -1,8 +1,9 @@
-from Hex_class import HexState
-from config import RAVE_constants
-from math import sqrt, log
-from random import choice
 from copy import deepcopy
+from math import log, sqrt
+from random import choice
+
+from Hex_class import HexState
+from settings import RAVE_constants
 
 """
 NODE:
@@ -33,8 +34,9 @@ MCTS Agent:
         5) expand
 """
 
+
 class Node:
-    def __init__(self, move: tuple = None, parent = None):
+    def __init__(self, move: tuple = None, parent=None):
         self.parent = parent
         self.move = move
         self.children = []
@@ -48,14 +50,15 @@ class Node:
         return self.N
 
     @property
-    def value(self, explore = RAVE_constants.explore):
+    def value(self, explore=RAVE_constants.explore):
         if self.N == 0:
             return 0 if explore == 0 else float('inf')
         else:
             rave_weight = max(0, 1 - (self.N_rave/RAVE_constants.rave_const))
-            UCT_value = self.Q/self.N + explore*sqrt(2 * log(self.parent.N/self.N))
+            UCT_value = self.Q/self.N + explore * \
+                sqrt(2 * log(self.parent.N/self.N))
             rave_value = self.Q_rave/self.N_rave if self.N_rave != 0 else 0
-            
+
             value = (1 - rave_weight)*UCT_value + rave_weight*rave_value
             return value
 
@@ -66,6 +69,7 @@ class Node:
     def isleaf(self):
         return True if len(self.children) == 0 else False
 
+
 """
 Each iteration:
 1) Selection
@@ -74,15 +78,17 @@ Each iteration:
 4) Backpropogation
 """
 
+
 class MCTSAgent:
     def __init__(self, root_state: HexState) -> None:
         self.root_node = Node()
         self.root_state = deepcopy(root_state)
+        self.num_rollouts = 0
 
     def simulate(self, state: HexState):
         curr_state = deepcopy(state)
         possible_moves = curr_state.possible_actions()
-        
+
         while curr_state.winner == None:
             curr_action = choice(possible_moves)
             curr_state.step(curr_action)
@@ -103,8 +109,9 @@ class MCTSAgent:
     def expand(self, node: Node, state: HexState):
         if state.winner != None:
             return False
-        
-        node.add_children([Node(move, node) for move in state.possible_actions()])
+
+        node.add_children([Node(move, node)
+                          for move in state.possible_actions()])
         return True
 
     def select_node(self):
@@ -134,7 +141,6 @@ class MCTSAgent:
             state.step(node.move)
         return node, state
 
-
     def backpropagate(self, node, outcome, turn, black_rave_pts, white_rave_pts):
         reward = -1 if outcome == turn else 1
 
@@ -156,10 +162,9 @@ class MCTSAgent:
             reward = -reward
 
             node = node.parent
-            
 
-    def search(self, time_limit: int = 10):
-        N = 5000
+    def search(self, num_rollout=None, time_limit=None):
+        N = 1000
         num_rollouts = 0
         while num_rollouts < N:
             node, state = self.select_node()
@@ -167,6 +172,7 @@ class MCTSAgent:
             outcome, black, white = self.simulate(state)
             self.backpropagate(node, outcome, turn, black, white)
             num_rollouts += 1
+        self.num_rollouts = num_rollouts
 
     def best_move(self) -> tuple:
         benchmark = float('-inf')

@@ -1,12 +1,13 @@
-from settings import game_settings
-from Numba_hex_class import create_empty_board
+from math import log, sqrt
 from random import randint
 from time import perf_counter
-from math import sqrt, log
-from numba import njit
-from numba import int64, deferred_type, optional, float64
-from numba.experimental import jitclass
+
 import numpy as np
+from numba import deferred_type, float64, int64, njit, optional
+from numba.experimental import jitclass
+
+from numba_hex_class import create_empty_board
+from settings import RAVE_constants, game_settings
 
 # NODE CLASS
 Node_type = deferred_type()
@@ -23,6 +24,9 @@ spec = (
     ('Q_rave', int64),
 
 )
+
+rave_const = RAVE_constants.rave_const
+explore = RAVE_constants.explore
 
 
 @jitclass(spec)
@@ -44,13 +48,13 @@ class Node:
         Q_rave = self.Q_rave * turn
         Q = self.Q * turn
 
-        rave_weight = max(0, 1 - (self.N_rave/300))
+        rave_weight = max(0, 1 - (self.N_rave/rave_const))
         if self.N_rave != 0:
             rave_value = Q_rave/self.N_rave
         else:
             rave_value = 0
 
-        UCT_value = (Q/self.N) + 0.5 * sqrt(2 * log(self.parent.N/self.N))
+        UCT_value = (Q/self.N) + explore * sqrt(2 * log(self.parent.N/self.N))
 
         value = (1 - rave_weight)*UCT_value + rave_weight*rave_value
         return float64(value)
@@ -58,10 +62,10 @@ class Node:
     def set_children(self, new_children):
         self.children = np.append(self.children, new_children)
 
-    def get_stats(self):
-        print(
-            f'N:{self.N}, Q:{self.Q}, Q_r:{self.Q_rave}, N_r:{self.N_rave}, M:{self.move}')
-        # print(self.value())
+    # def get_stats(self):
+    #     print(
+    #         f'N:{self.N}, Q:{self.Q}, Q_r:{self.Q_rave}, N_r:{self.N_rave}, M:{self.move}')
+    #     # print(self.value())
 
     def QbyN(self, turn):
         # Q = self.Q * turn
@@ -205,7 +209,7 @@ def fetch_best_move(state, limit):
         backup(winner, node, turn, blk_rave, wht_rave, memory)
 
         num_simulation += 1
-    print(blk, wht)
+    # print(blk, wht)
 
     array = np.zeros(0, dtype=np.int64)
     benchmark = float64(-1000000)
@@ -213,7 +217,7 @@ def fetch_best_move(state, limit):
     for child_mem_addrs in root_node.children:
         child = memory[child_mem_addrs]
         value_of_child = child.QbyN(root_state.to_play)
-        child.get_stats()
+        # child.get_stats()
 
         if value_of_child > benchmark:
             benchmark = value_of_child
@@ -226,10 +230,11 @@ def fetch_best_move(state, limit):
     selected_index_from_array = randint(0, array.size-1)
     node = memory[array[selected_index_from_array]]
     move = node.move
-    root_node.get_stats()
+    # root_node.get_stats()
     return move
 
-def compile_RAVE(n):
+
+def compile_RAVE(n=1000):
     start = perf_counter()
     board = create_empty_board(game_settings.board_size)
     fetch_best_move(board, n)

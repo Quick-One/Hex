@@ -249,9 +249,18 @@ def _main():
 def intmove_to_tupl(move: int, size: int) -> tuple:
     return (move//size, move % size)
 
+
 def tuplemove_to_int(move: tuple, size: int) -> int:
-    x,y = move
+    x, y = move
     return x*size + y
+
+
+def move_to_string(move: tuple) -> str:
+    """
+    Returns the coordinate in '$#' form where $ - letter and # - digit.
+    """
+    i, j = move
+    return f"{ascii_letters[j]}{i+1}"
 
 
 if __name__ == '__main__':

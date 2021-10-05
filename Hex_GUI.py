@@ -1,15 +1,19 @@
 from platform import system
 from string import ascii_letters
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
 
-import agent
-import Numba_hex_class
+from hex_agents import HexAgents
 from Hex_class import GuiHexState, HexState
-from Hex_utils import intmove_to_tupl, tuplemove_to_int
-from settings import board_settings, game_settings
+from hex_utils import tuplemove_to_int
+from settings import (Numba_agent_settings, board_settings, game_settings,
+                      py_agent_settings)
+
+# Removes icons from mpl window
+mpl.rcParams['toolbar'] = 'None'
 
 
 class GUI_element:
@@ -109,21 +113,22 @@ class GUI():
         self.BOARD_OFFSET = BOARD_OFFSET
         self.LABEL_OFFSET = LABEL_OFFSET
 
-    def set_window_label_icon(self) -> None:
+    def configure_mpl_window(self) -> None:
         '''
-        Sets matplotlib window label.
+        1. Sets matplotlib window label. 
+        2. Sets icon to hex.ico 
         '''
         try:
             self.fig.canvas.set_window_title('HEX')
         except Exception as e:
             pass
-        
+
         try:
             thismanager = plt.get_current_fig_manager()
             thismanager.window.wm_iconbitmap("hex.ico")
         except Exception as e:
             pass
-              
+
     def show(self, fullscreen=True) -> None:
         '''
         Shows the main GUI window.
@@ -274,8 +279,9 @@ class GUI():
         '''
         Gets agent's move. 
         '''
-        return agent.best_move(self.agent_game)
-        # return agent.numba_best_move(self.numba_agent_game)
+        if self.numba_agent_game is not None:
+            return HexAgents.numba_MCTS_RAVE(self.numba_agent_game, Numba_agent_settings.num_rollouts)
+        return HexAgents.MCTS_RAVE(self.agent_game, py_agent_settings.num_rollout, py_agent_settings.time_control)
 
     def simulate_game(self) -> None:
         '''
@@ -304,7 +310,8 @@ class GUI():
             self.game.step(move)
             self.agent_game.step(move)
             if self.numba_agent_game is not None:
-                self.numba_agent_game.step(tuplemove_to_int(move, self.board_size))
+                self.numba_agent_game.step(
+                    tuplemove_to_int(move, self.board_size))
             self.place_piece(move, turn)
             self.refresh()
 
@@ -375,7 +382,7 @@ def _main():
     agent_game = HexState(size=game_settings.board_size)
     # numba_agent_game = Numba_hex_class.create_empty_board(
     #     game_settings.board_size)
-    gui = GUI(game, agent_game, game_settings.player_1, game_settings.player_2 )
+    gui = GUI(game, agent_game, game_settings.player_1, game_settings.player_2)
     # gui = GUI(game, agent_game, game_settings.player_1,
     #           game_settings.player_2, numba_agent_game=numba_agent_game)
     gui.render_coords()

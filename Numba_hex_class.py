@@ -344,7 +344,7 @@ def _compile_board(n, size):
             board.step(moves[action_index])
 
 
-def compile_board(n, size):
+def compile_board(n=100, size=size):
     start = perf_counter()
     _compile_board(n, size)
     print(f'Compiled numba HexClass in {(perf_counter()-start):.3f}s.')
