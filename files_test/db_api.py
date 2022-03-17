@@ -26,3 +26,4 @@ class game_db_api:
 
     def get_games(self):
         return self.db.execute(f"SELECT * FROM {self.table_name}")
+    

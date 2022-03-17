@@ -1,11 +1,7 @@
-import warnings
 from string import ascii_letters
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Polygon, RegularPolygon
-
-warnings.filterwarnings("ignore")
 
 NEIGHBOUR_PATTERNS = ((-1, 0), (0, -1), (0, 1), (1, 0), (1, -1), (-1, 1))
 circumradius = 1
@@ -36,12 +32,9 @@ def get_coords(index: tuple) -> tuple:
 
 
 def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, filter: np.ndarray = None, heatmap: dict = None):
-
-    # For 1D board format
-    if len(board.shape) == 1:
-        size = int((board.size)**(0.5))
-        board = board.reshape(size, size)
-
+    '''
+    Function to visualise board.
+    '''
     size_row, size_column = board.shape
     coords = np.zeros((size_row, size_column), dtype=object)
 
@@ -57,7 +50,7 @@ def visualize_board(board: np.ndarray, moves_order: list = None, filename=None, 
 
     hexagonal_tiles = np.zeros((size_row, size_column), dtype=object)
 
-    ax = plt.axes()
+    fig, ax = plt.subplots()
     ax.set_aspect('equal')
 
     L = coords[0, 0]
@@ -254,8 +247,8 @@ def _main():
     board[0][1] = -1
     board[1][2] = 1
     order = [(0, 0), (0, 1), (1, 2)]
-    heat = {25: 30, 26: 30, 32: 100}
-    visualize_board(board, order, heatmap=heat)
+    visualize_board(board, order)
+    visualize_board(board, order)
 
     print(hex_IsTerminal(board, 6, 1))
 

@@ -9,8 +9,7 @@ from matplotlib.patches import Circle, Polygon, RegularPolygon
 from hex_agents import HexAgents
 from hex_class import GuiHexState, HexState
 from hex_utils import intmove_to_tupl, tuplemove_to_int
-from settings import (Numba_agent_settings, board_settings, game_settings,
-                      py_agent_settings)
+from settings import (board_settings, game_settings, py_agent_settings)
 
 # Removes icons from mpl window
 mpl.rcParams['toolbar'] = 'None'
@@ -88,7 +87,6 @@ class GUI():
                  agent_game: HexState,
                  player1: str, player2: str,
                  numba_agent_game=None,
-                 heatmap=False,
                  CIRCUMRADIUS: int = board_settings.CIRCUMRADIUS,
                  INRADIUS: int = board_settings.INRADIUS,
                  BOARD_OFFSET: int = board_settings.BOARD_OFFSET,
@@ -113,7 +111,6 @@ class GUI():
         self.INRADIUS = INRADIUS
         self.BOARD_OFFSET = BOARD_OFFSET
         self.LABEL_OFFSET = LABEL_OFFSET
-        self.heatmap = heatmap
 
     def configure_mpl_window(self) -> None:
         '''
@@ -121,12 +118,12 @@ class GUI():
         2. Sets icon to hex.ico 
         '''
         try:
-            self.fig.canvas.set_window_title('HEX')
+            self.fig.canvas.manager.set_window_title('HEX')
         except Exception as e:
             pass
 
         try:
-            thismanager = plt.get_current_fig_manager()
+            thismanager = self.fig.canvas.manager
             thismanager.window.wm_iconbitmap("hex.ico")
         except Exception as e:
             pass
@@ -137,7 +134,7 @@ class GUI():
         '''
         if system() == 'Windows':
             if fullscreen:
-                plt.get_current_fig_manager().window.state('zoomed')
+                self.fig.canvas.manager.full_screen_toggle()
             else:
                 self.fig.show()
         else:
@@ -250,29 +247,6 @@ class GUI():
                 return (True, (i, j))
         return (False, None)
 
-    def generate_heatmap(self, heatmap, filename):
-        total_n = sum(heatmap.values())
-        initial_color = self.hexagonal_tiles[0, 0].get_facecolor()
-        tiles_changed = []
-
-        for key, value in heatmap.items():
-            if isinstance(key, int):
-                move = intmove_to_tupl(key, self.board_size)
-            tiles_changed.append(move)
-
-            # color_heat = 1 - (value/total_n)
-            color_heat = (1/(1 + np.exp(-(1-(value/total_n)))))
-            print(move, color_heat)
-
-            if self.game.to_play == -1:
-                col = (color_heat, color_heat, 1)
-            else:
-                col = (1, color_heat, color_heat)
-            self.hexagonal_tiles[move].set_facecolor(col)
-        plt.savefig(f'game_{str(filename)}.png', bbox_inches='tight')
-
-        for move in tiles_changed:
-            self.hexagonal_tiles[move].set_facecolor(initial_color)
 
     def get_human_move(self, turn: int) -> tuple:
         '''
@@ -285,14 +259,12 @@ class GUI():
             if is_find:
                 orignal_piece_on_board = self.game.board[move]
                 if orignal_piece_on_board != 0:
-                    print(
-                        f"WARNING: {GuiHexState.move_to_string(move)} is already occupied by {GuiHexState.color_legend[orignal_piece_on_board]} piece.")
+                    print(f"WARNING: {GuiHexState.move_to_string(move)} is already occupied by {GuiHexState.color_legend[orignal_piece_on_board]} piece.")
                 else:
                     self.fig.canvas.mpl_disconnect(event_handler_id)
                     human_move['Found_valid_move'] = True
                     human_move['move'] = move
-                    print(
-                        f'INFO: Move on {GuiHexState.move_to_string(move)} registered for {GuiHexState.color_legend[turn]}.')
+                    print(f'INFO: Move on {GuiHexState.move_to_string(move)} registered for {GuiHexState.color_legend[turn]}.')
 
         event_handler_id = self.fig.canvas.mpl_connect(
             'button_press_event', getmove_onclick)
@@ -305,15 +277,8 @@ class GUI():
         '''
         Gets agent's move. 
         '''
-        if self.numba_agent_game is not None:
-            move, heatmap = HexAgents.numba_MCTS_RAVE(
-                self.numba_agent_game, Numba_agent_settings.num_rollouts)
-        else:
-            return HexAgents.MCTS_RAVE(self.agent_game, py_agent_settings.num_rollout, py_agent_settings.time_control)
-        if self.heatmap:
-            self.generate_heatmap(heatmap, 1)
-        return move
-
+        return HexAgents.MCTS_RAVE(self.agent_game, py_agent_settings.num_rollout, py_agent_settings.time_control)
+    
     def simulate_game(self) -> None:
         '''
         Simulates Hex game.

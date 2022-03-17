@@ -10,6 +10,9 @@ TABLE_NAME = 'games'
 DATAFILE_PATH = 'game_storage_test.dat'
 
 class GameSaver:
+    '''
+    A class for saving game in the pickle file by indexing in the db
+    '''
     def __init__(self, db_path, table_name, datafile_path):
         self.datafile_path = datafile_path
         self.db = game_db_api(db_path, table_name)
@@ -24,6 +27,9 @@ class GameSaver:
         self.save_game_history(game_history, id)
 
 class GameStorageAPI:
+    '''
+    User front front end for db.
+    '''
     def __init__(self, db_path, table_name, datafile_path) -> None:
         self.datafile_path = datafile_path
         self.db = game_db_api(db_path, table_name)

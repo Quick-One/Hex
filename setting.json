@@ -1,0 +1,13 @@
+{
+    "player_1_name": "Player 1",
+    "player_2_name": "RAVE",
+    "player_1_AI": false,
+    "player_2_AI": false
+
+    // "board_size": 6
+}
+{
+    size: int
+    board: np.ndarray
+    move_lis = []
+}

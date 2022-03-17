@@ -16,11 +16,6 @@ class py_agent_settings:
     time_control = None
     num_rollout = None
 
-
-class Numba_agent_settings:
-    num_rollouts = 50_000
-
-
 class RAVE_constants:
     rave_const = 300
     explore = 0.5

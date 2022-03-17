@@ -104,7 +104,7 @@ class HexState:
 
 
 class GuiHexState(HexState):
-    color_legend = {1: 'Black', -1: 'White'}
+    color_legend = {BLACK: 'Black', WHITE: 'White'}
 
     def __init__(self, size) -> None:
         super().__init__(size)
@@ -232,10 +232,4 @@ def _main(visualise=True) -> None:
 
 if __name__ == '__main__':
     _main()
-    pass
-    # Code to generate call graph
-    # from pycallgraph import PyCallGraph
-    # from pycallgraph.output import GraphvizOutput
 
-    # with PyCallGraph(output=GraphvizOutput()):
-    #     _main(visualise=False)
