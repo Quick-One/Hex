@@ -6,11 +6,11 @@ class game_db_api:
         self.db = sqlite3.connect(db_path)
         self.table_name = table_name
 
-    def add_game(self, username1: str, username2: str, winner: int):
+    def add_game(self, player_white: str, player_black: str, winner: str, is_agent_play: bool):
         cursor = self.db.execute(
-            f'INSERT INTO {self.table_name} (username1, username2, winner, curr_time) \
-            VALUES (?, ?, ?, ?);',
-            (username1, username2, winner, str(datetime.now()))
+            f'INSERT INTO {self.table_name} (player_black, player_white, winner, is_agent_play, curr_time) \
+            VALUES (?, ?, ?, ?, ?);',
+            (player_black, player_white, winner, int(is_agent_play), str(datetime.now()))
         )
         
         self.db.commit()
@@ -18,11 +18,15 @@ class game_db_api:
 
     def get_game_by_username(self, username):
         return self.db.execute(f'SELECT * FROM {self.table_name} \
-            WHERE username1="{username}" OR username2="{username}";')
+            WHERE player_black="{username}" OR player_white="{username}";')
 
     def get_game_by_id(self, id):
         return self.db.execute(f"SELECT * FROM {self.table_name} \
-            WHERE id={id}")
+            WHERE game_id={id}")
+
+    def get_agent_games(self):
+        return self.db.execute(f"SELCT * FROM {self.table_name} \
+            WHERE is_agent_play=1")
 
     def get_games(self):
         return self.db.execute(f"SELECT * FROM {self.table_name}")

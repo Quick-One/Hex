@@ -1,8 +1,7 @@
 class UnionFind:
     """
     Notes:
-        unionfind data structure specialized for finding hex connections.
-        Implementation inspired by UAlberta CMPUT 275 2015 class notes.
+        Unionfind data structure specialized for finding hex connections.
 
     Attributes:
         parent (dict): Each group parent

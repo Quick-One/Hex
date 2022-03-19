@@ -1,7 +1,5 @@
 
 class game_settings:
-    player_1 = 'Human'
-    player_2 = 'Agent'
     board_size = 6
 
 

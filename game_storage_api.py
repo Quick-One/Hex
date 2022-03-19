@@ -5,9 +5,9 @@ from tabulate import tabulate
 from hex_utils import visualize_board
 import numpy as np
 
-DB_PATH = 'test.db'
+DB_PATH = 'game_storage_db.db'
 TABLE_NAME = 'games'
-DATAFILE_PATH = 'game_storage_test.dat'
+DATAFILE_PATH = 'game_storage.dat'
 
 class GameSaver:
     '''
@@ -17,14 +17,14 @@ class GameSaver:
         self.datafile_path = datafile_path
         self.db = game_db_api(db_path, table_name)
 
-    def save_game_history(self, history, id):
+    def save_game_history(self, id, history, board_size):
         with open(self.datafile_path, 'ab') as dtfile:
-            data = {'id': id, 'game': history}
+            data = {'id': id, 'game': history, 'board_size': board_size}
             pickle.dump(data, dtfile)
 
-    def save(self, username1: str, username2: str, winner: int, game_history: list):
-        id = self.db.add_game(username1, username2, winner)
-        self.save_game_history(game_history, id)
+    def save(self, player_white: str, player_black: str, winner: str, is_agent_play: bool, game_history: list, board_size: int):
+        id = self.db.add_game(player_white, player_black, winner, is_agent_play)
+        self.save_game_history(id, game_history, board_size)
 
 class GameStorageAPI:
     '''
@@ -39,9 +39,8 @@ class GameStorageAPI:
             while True:
                 try:
                     curr_dict = pickle.load(dtfile)
-                    print(curr_dict)
                     if curr_dict['id'] == id:
-                        return curr_dict['game']
+                        return curr_dict['board_size'], curr_dict['game']
                 except EOFError:
                     break
     
@@ -56,6 +55,7 @@ class GameStorageAPI:
 
     def menu(self):
         while True:
+            print()
             username = input("Enter username to retrieve games: ")
 
             cursor = self.db.get_game_by_username(username)
@@ -63,9 +63,17 @@ class GameStorageAPI:
             if len(list(self.db.get_game_by_username(username))) == 0:
                 print("No game entries found with this username.\n")
             else:
+                data = [[i + 1, *row] for i, row in enumerate(list(cursor))]
+
+                for i in range(len(data)):
+                    if bool(data[i][5]):
+                        data[i][5] = 'Yes'
+                    else:
+                        data[i][5] = 'No'
+
                 table = tabulate(
-                    [[i + 1, *row] for i, row in enumerate(list(cursor))],
-                    headers=['S No.', 'DB_ID', 'username1', 'username2', 'winner', 'time_added'],
+                    data,
+                    headers=['S No.', 'DB_ID', 'player_black', 'player_white', 'winner', 'is_agent_play', 'time_added'],
                     tablefmt='orgtbl'
                 )
                 print(table)
@@ -73,9 +81,6 @@ class GameStorageAPI:
 
                 id = int(input("Select game by DB_ID: "))
                 game_info = list(self.db.get_game_by_id(id))[0]
-                game_history = self.search_datafile(id)
-                print(game_history, game_info)
+                board_size, game_history = self.search_datafile(id)
 
-                visualize_board(GameStorageAPI.convert_to_board(game_history, 6), moves_order=game_history)
-
-
+                visualize_board(GameStorageAPI.convert_to_board(game_history, board_size), moves_order=game_history)

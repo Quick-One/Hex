@@ -376,11 +376,7 @@ class GUI():
 def _main():
     game = GuiHexState(size=game_settings.board_size)
     agent_game = HexState(size=game_settings.board_size)
-    # numba_agent_game = Numba_hex_class.create_empty_board(
-    #     game_settings.board_size)
-    gui = GUI(game, agent_game, game_settings.player_1, game_settings.player_2)
-    # gui = GUI(game, agent_game, game_settings.player_1,
-    #           game_settings.player_2, numba_agent_game=numba_agent_game)
+    gui = GUI(game, agent_game, 'Human', 'Human')
     gui.render_coords()
     gui.render_board()
     gui.render_labels()
