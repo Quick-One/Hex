@@ -1,18 +1,21 @@
-from db_api import game_db_api
 import pickle
-from copy import deepcopy
-from tabulate import tabulate
-from hex_utils import visualize_board
-import numpy as np
 
-DB_PATH = 'game_storage_db.db'
+import numpy as np
+from hex.gui.draw_board import visualize_board
+from tabulate import tabulate
+
+from db.db_api import game_db_api
+
+DB_PATH = 'db/game_storage_db.db'
 TABLE_NAME = 'games'
-DATAFILE_PATH = 'game_storage.dat'
+DATAFILE_PATH = 'db/game_storage.dat'
+
 
 class GameSaver:
     '''
     A class for saving game in the pickle file by indexing in the db
     '''
+
     def __init__(self, db_path, table_name, datafile_path):
         self.datafile_path = datafile_path
         self.db = game_db_api(db_path, table_name)
@@ -26,10 +29,12 @@ class GameSaver:
         id = self.db.add_game(player_white, player_black, winner, is_agent_play)
         self.save_game_history(id, game_history, board_size)
 
+
 class GameStorageAPI:
     '''
     User front front end for db.
     '''
+
     def __init__(self, db_path, table_name, datafile_path) -> None:
         self.datafile_path = datafile_path
         self.db = game_db_api(db_path, table_name)
@@ -43,14 +48,14 @@ class GameStorageAPI:
                         return curr_dict['board_size'], curr_dict['game']
                 except EOFError:
                     break
-    
+
     @staticmethod
     def convert_to_board(move_history, size):
         board = np.zeros((size, size))
         curr = 1
         for x, y in move_history:
             board[x, y] = curr
-            curr*=-1
+            curr *= -1
         return board
 
     def menu(self):
@@ -83,4 +88,5 @@ class GameStorageAPI:
                 game_info = list(self.db.get_game_by_id(id))[0]
                 board_size, game_history = self.search_datafile(id)
 
-                visualize_board(GameStorageAPI.convert_to_board(game_history, board_size), moves_order=game_history)
+                visualize_board(GameStorageAPI.convert_to_board(game_history, board_size),
+                                move_order=game_history, plot=True)

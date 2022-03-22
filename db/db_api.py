@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 
+
 class game_db_api:
     def __init__(self, db_path, table_name) -> None:
         self.db = sqlite3.connect(db_path)
@@ -12,7 +13,7 @@ class game_db_api:
             VALUES (?, ?, ?, ?, ?);',
             (player_black, player_white, winner, int(is_agent_play), str(datetime.now()))
         )
-        
+
         self.db.commit()
         return cursor.lastrowid
 
@@ -30,4 +31,3 @@ class game_db_api:
 
     def get_games(self):
         return self.db.execute(f"SELECT * FROM {self.table_name}")
-    
