@@ -9,7 +9,7 @@ from hex.board import P1, P2, Hex, HexBase, possible_moves
 
 EXPLORE = 0.5
 RAVE_CONST = 300
-ROLLOUT = 100
+ROLLOUT = 5000
 """
 NODE:
     VALUE STORAGE:
