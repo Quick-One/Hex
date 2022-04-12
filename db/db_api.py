@@ -9,7 +9,7 @@ class game_db_api:
 
     def add_game(self, player_1: str, player_2: str, winner: str, is_agent_play: bool):
         cursor = self.db.execute(
-            f'INSERT INTO {self.table_name} (player_black, player_white, winner, is_agent_play, curr_time) \
+            f'INSERT INTO {self.table_name} (player_1, player_2, winner, is_agent_play, curr_time) \
             VALUES (?, ?, ?, ?, ?);',
             (player_1, player_2, winner, int(is_agent_play), str(datetime.now()))
         )
@@ -19,7 +19,7 @@ class game_db_api:
 
     def get_game_by_username(self, username):
         return self.db.execute(f'SELECT * FROM {self.table_name} \
-            WHERE player_black="{username}" OR player_white="{username}";')
+            WHERE player_1="{username}" OR player_2="{username}";')
 
     def get_game_by_id(self, id):
         return self.db.execute(f"SELECT * FROM {self.table_name} \
