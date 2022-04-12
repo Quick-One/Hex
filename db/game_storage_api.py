@@ -25,8 +25,8 @@ class GameSaver:
             data = {'id': id, 'game': history, 'board_size': board_size}
             pickle.dump(data, dtfile)
 
-    def save(self, player_white: str, player_black: str, winner: str, is_agent_play: bool, game_history: list, board_size: int):
-        id = self.db.add_game(player_white, player_black, winner, is_agent_play)
+    def save(self, player_1: str, player_2: str, winner: str, is_agent_play: bool, game_history: list, board_size: int):
+        id = self.db.add_game(player_1, player_2, winner, is_agent_play)
         self.save_game_history(id, game_history, board_size)
 
 
@@ -78,7 +78,7 @@ class GameStorageAPI:
 
                 table = tabulate(
                     data,
-                    headers=['S No.', 'DB_ID', 'player_black', 'player_white', 'winner', 'is_agent_play', 'time_added'],
+                    headers=['S No.', 'DB_ID', 'player_1', 'player_2', 'winner', 'is_agent_play', 'time_added'],
                     tablefmt='orgtbl'
                 )
                 print(table)

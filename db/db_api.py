@@ -7,11 +7,11 @@ class game_db_api:
         self.db = sqlite3.connect(db_path)
         self.table_name = table_name
 
-    def add_game(self, player_white: str, player_black: str, winner: str, is_agent_play: bool):
+    def add_game(self, player_1: str, player_2: str, winner: str, is_agent_play: bool):
         cursor = self.db.execute(
             f'INSERT INTO {self.table_name} (player_black, player_white, winner, is_agent_play, curr_time) \
             VALUES (?, ?, ?, ?, ?);',
-            (player_black, player_white, winner, int(is_agent_play), str(datetime.now()))
+            (player_1, player_2, winner, int(is_agent_play), str(datetime.now()))
         )
 
         self.db.commit()

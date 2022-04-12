@@ -1,5 +1,5 @@
 import logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(levelname)s - %(message)s')
 from json import load
 from random import shuffle
 
