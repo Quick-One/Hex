@@ -1,10 +1,15 @@
+import logging
 from copy import deepcopy
 from math import log, sqrt
 from random import choice
+from time import perf_counter
 
-from hex_class import HexState
-from settings import RAVE_constants
+from hex.agent import HexAgent
+from hex.board import P1, P2, Hex, HexBase, possible_moves
 
+EXPLORE = 0.5
+RAVE_CONST = 300
+ROLLOUT = 5000
 """
 NODE:
     VALUE STORAGE:
@@ -50,11 +55,11 @@ class Node:
         return self.N
 
     @property
-    def value(self, explore=RAVE_constants.explore):
+    def value(self, explore=EXPLORE):
         if self.N == 0:
             return 0 if explore == 0 else float('inf')
         else:
-            rave_weight = max(0, 1 - (self.N_rave/RAVE_constants.rave_const))
+            rave_weight = max(0, 1 - (self.N_rave/RAVE_CONST))
             UCT_value = self.Q/self.N + explore * \
                 sqrt(2 * log(self.parent.N/self.N))
             rave_value = self.Q_rave/self.N_rave if self.N_rave != 0 else 0
@@ -80,38 +85,38 @@ Each iteration:
 
 
 class MCTSAgent:
-    def __init__(self, root_state: HexState) -> None:
+    def __init__(self, root_state: HexBase) -> None:
         self.root_node = Node()
         self.root_state = deepcopy(root_state)
         self.num_rollouts = 0
 
-    def simulate(self, state: HexState):
+    def simulate(self, state: HexBase):
         curr_state = deepcopy(state)
-        possible_moves = curr_state.possible_actions()
+        legal_moves = possible_moves(curr_state.size, curr_state.board)
 
-        while curr_state.winner == None:
-            curr_action = choice(possible_moves)
+        while curr_state.winner is None:
+            curr_action = choice(legal_moves)
             curr_state.step(curr_action)
-            possible_moves.remove(curr_action)
+            legal_moves.remove(curr_action)
 
         black_rave_pts = []
         white_rave_pts = []
 
         for x in range(state.size):
             for y in range(state.size):
-                if state.board[(x, y)] == 1:
+                if state.board[(x, y)] == P1:
                     black_rave_pts.append((x, y))
-                elif state.board[(x, y)] == -1:
+                elif state.board[(x, y)] == P2:
                     white_rave_pts.append((x, y))
 
         return curr_state.winner, black_rave_pts, white_rave_pts
 
-    def expand(self, node: Node, state: HexState):
-        if state.winner != None:
+    def expand(self, node: Node, state):
+        if state.winner is not None:
             return False
 
         node.add_children([Node(move, node)
-                          for move in state.possible_actions()])
+                          for move in possible_moves(state.size, state.board)])
         return True
 
     def select_node(self):
@@ -146,7 +151,7 @@ class MCTSAgent:
 
         while node is not None:
             for i, child_node in enumerate(node.children):
-                if turn == -1:
+                if turn == P2:
                     if child_node.move in white_rave_pts:
                         node.children[i].Q_rave += -reward
                         node.children[i].N_rave += 1
@@ -163,12 +168,12 @@ class MCTSAgent:
 
             node = node.parent
 
-    def search(self, num_rollout=None, time_limit=None):
-        N = 1000
+    def search(self, num_rollout=ROLLOUT):
+        rollout_limit = num_rollout
         num_rollouts = 0
-        while num_rollouts < N:
+        while num_rollouts < rollout_limit:
             node, state = self.select_node()
-            turn = state.turn()
+            turn = state.turn
             outcome, black, white = self.simulate(state)
             self.backpropagate(node, outcome, turn, black, white)
             num_rollouts += 1
@@ -187,3 +192,16 @@ class MCTSAgent:
                 max_children.append(child_node)
 
         return choice(max_children).move
+
+
+def best_move(board: Hex):
+    board = board.get_base()
+    agent = MCTSAgent(board)
+    start = perf_counter()
+    agent.search()
+    best_move = agent.best_move()
+    logging.info(f'Completed {agent.num_rollouts} rollouts in {(perf_counter()-start):.3f}s.')
+    return best_move
+
+
+HexAgent('MCTS', best_move)

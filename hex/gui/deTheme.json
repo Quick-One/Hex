@@ -1,0 +1,72 @@
+{
+    "P1_color": "black",
+    "P2_color": "white",
+    "BOARD_OFFSET": 3,
+    "LABEL_OFFSET": 0.7,
+    "rcParams": {
+        "toolbar": "None"
+    },
+    "P1_triangle": {
+        "fc": "k",
+        "closed": true
+    },
+    "P2_triangle": {
+        "fc": "0.9",
+        "closed": true
+    },
+    "axLabel": {
+        "ha": "center",
+        "va": "center",
+        "size": 10,
+        "color": "k",
+        "family": "sans-serif",
+        "weight": "light"
+    },
+    "hexTile": {
+        "numVertices": 6,
+        "radius": 1,
+        "facecolor": "1",
+        "edgecolor": "darkgrey",
+        "linewidth": "1.5",
+        "orientation": 0.5235987755982988
+    },
+    "P1_piece": {
+        "radius": 0.6,
+        "facecolor": "0.2",
+        "edgecolor": "k",
+        "linewidth": "2"
+    },
+    "P2_piece": {
+        "radius": 0.6,
+        "facecolor": "w",
+        "edgecolor": "k",
+        "linewidth": "2"
+    },
+    "highlightedTile": {
+        "radius": 1,
+        "numVertices": 6,
+        "facecolor": "none",
+        "edgecolor": "lime",
+        "linewidth": "4",
+        "orientation": 0.5235987755982988
+    },
+    "P1MoveNo": {
+        "ha": "center",
+        "va": "center",
+        "size": 12,
+        "fontfamily": "Comic Sans MS",
+        "color": "w"
+    },
+    "P2MoveNo": {
+        "ha": "center",
+        "va": "center",
+        "size": 12,
+        "fontfamily": "Comic Sans MS",
+        "color": "k"
+    },
+    "boardBorder": {
+        "facecolor": "none",
+        "edgecolor": "k",
+        "linewidth": "2"
+    }
+}

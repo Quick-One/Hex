@@ -1,0 +1,67 @@
+{
+    "P1_color": "red",
+    "P2_color": "blue",
+    "BOARD_OFFSET": 3,
+    "LABEL_OFFSET": 0.7,
+    "rcParams": {
+        "toolbar": "None"
+    },
+    "P1_triangle": {
+        "fc": "red",
+        "closed": true
+    },
+    "P2_triangle": {
+        "fc": "blue",
+        "closed": true
+    },
+    "axLabel": {
+        "ha": "center",
+        "va": "center",
+        "size": 10,
+        "color": "k",
+        "family": "sans-serif",
+        "weight": "light"
+    },
+    "hexTile": {
+        "numVertices": 6,
+        "radius": 1,
+        "facecolor": "1",
+        "edgecolor": "k",
+        "linewidth": "1.5",
+        "orientation": 0.5235987755982988
+    },
+    "P1_piece": {
+        "radius": 0.6,
+        "facecolor": "red",
+        "edgecolor": "k",
+        "linewidth": "2"
+    },
+    "P2_piece": {
+        "radius": 0.6,
+        "facecolor": "blue",
+        "edgecolor": "k",
+        "linewidth": "2"
+    },
+    "highlightedTile": {
+        "radius": 1,
+        "numVertices": 6,
+        "facecolor": "none",
+        "edgecolor": "lime",
+        "linewidth": "4",
+        "orientation": 0.5235987755982988
+    },
+    "P1MoveNo": {
+        "ha": "center",
+        "va": "center",
+        "size": 12,
+        "fontfamily": "Comic Sans MS",
+        "color": "w"
+    },
+    "P2MoveNo": {
+        "ha": "center",
+        "va": "center",
+        "size": 12,
+        "fontfamily": "Comic Sans MS",
+        "color": "w"
+    }
+}
