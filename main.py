@@ -71,5 +71,9 @@ def play_game(player_1: player, player_2: player):
     return game.move_history, game.legend[game.winner]
 
 
+def main():
+    HexGUI.start_game(Hex(BOARD_SIZE))
+
 if __name__ == '__main__':
-    menu()
+    # menu()
+    main()

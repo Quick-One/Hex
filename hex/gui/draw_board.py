@@ -120,12 +120,15 @@ def highlight_tiles(ax, locs: list):
     return high_tiles
 
 
-def add_piece(ax, loc, player):
+def add_piece(ax, loc, player, ghost = False):
     coord = get_coords(loc)
     if player == P1:
         piece = Circle(coord, **GUI_PARAMS['P1_piece'])
     else:
         piece = Circle(coord, **GUI_PARAMS['P2_piece'])
+    if ghost:
+        piece.set_alpha(0.4)
+        piece.set_linestyle('--')
     ax.add_patch(piece)
     return piece
 

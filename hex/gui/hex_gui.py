@@ -1,9 +1,10 @@
 import logging as log
 
 import matplotlib.pyplot as plt
+from matplotlib.backend_bases import MouseEvent
 import numpy as np
 from hex.agent import HexAgent
-from hex.board import EMPTY, Hex, move_to_string, shortest_connection, P1
+from hex.board import EMPTY, Hex, move_to_string, shortest_connection, P1, opponent
 from hex.gui.draw_board import (HexPlot, add_move_order, add_piece, add_pieces,
                                 coord_matrix, highlight_tiles)
 from hex.gui.theme import GUI_PARAMS
@@ -55,25 +56,58 @@ class HexGUI():
         '''
         Gets human move from the GUI.
         '''
-        human_move = {'Found_valid_move': False, 'move': None}
+        human_move = {
+                      'Found_valid_move': False,
+                      'move': None,
+                      'ghost_turn': self.game.turn,
+                    }
+        ghost_pieces = []
+        ghost_piece_loc = set()
 
-        def getmove_onclick(event):
+        def getmove_onclick(event : MouseEvent):
             is_find, move = self.pt_on_board(event.xdata, event.ydata)
-            if is_find:
+            
+            # Ghost moves
+            if is_find and event.button == 3 and self.game.board[move] == EMPTY and move not in ghost_piece_loc:
+                piece = add_piece(self.ax, move, human_move['ghost_turn'], ghost=True)
+                human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
+                ghost_pieces.append(piece)
+                ghost_piece_loc.add(move)
+
+            if is_find and event.button == 1:
                 orignal_piece_on_board = self.game.board[move]
                 if orignal_piece_on_board != EMPTY:
                     occ_piece_owner = self.game.players[orignal_piece_on_board].name
                     log.warning(f"{move_to_string(move)} is already occupied by {occ_piece_owner}'s piece.")
                 else:
                     self.fig.canvas.mpl_disconnect(event_handler_id)
+                    self.fig.canvas.mpl_disconnect(event_handler_id2)
                     human_move['Found_valid_move'] = True
                     human_move['move'] = move
                     curr_player = self.game.current_player
                     log.info(f'Move on {move_to_string(move)} registered for {curr_player}.')
+        
+        # def on_key_press(event):
+        #     if event.key == 'escape':
+        #         while ghost_pieces:
+        #             ghost_pieces.pop().remove()
+        #         self.refresh()
+        #         human_move['ghost_turn'] = self.game.turn
 
+        #     if event.key == 'left':
+        #         if ghost_pieces:
+        #             ghost_pieces.pop().remove()
+        #             human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
+        #             self.refresh()
+
+        # event_handler_id2 = self.fig.canvas.mpl_connect('key_press_event', on_key_press)
         event_handler_id = self.fig.canvas.mpl_connect('button_press_event', getmove_onclick)
+        print(event_handler_id)
+        # print(event_handler_id2)
         while human_move['Found_valid_move'] == False:
             plt.pause(0.1)
+        while ghost_pieces:
+            ghost_pieces.pop().remove()
         return human_move['move']
 
     def get_agent_move(self) -> tuple:
