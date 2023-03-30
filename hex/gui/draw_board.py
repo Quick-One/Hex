@@ -129,6 +129,7 @@ def add_piece(ax, loc, player, ghost = False):
     if ghost:
         piece.set_alpha(0.4)
         piece.set_linestyle('--')
+        piece.set_linewidth(1)
     ax.add_patch(piece)
     return piece
 

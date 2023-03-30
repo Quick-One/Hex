@@ -62,6 +62,7 @@ class HexGUI():
                       'ghost_turn': self.game.turn,
                     }
         ghost_pieces = []
+        ghost_piece_loc_l = []
         ghost_piece_loc = set()
 
         def getmove_onclick(event : MouseEvent):
@@ -73,6 +74,7 @@ class HexGUI():
                 human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
                 ghost_pieces.append(piece)
                 ghost_piece_loc.add(move)
+                ghost_piece_loc_l.append(move)
 
             if is_find and event.button == 1:
                 orignal_piece_on_board = self.game.board[move]
@@ -91,11 +93,13 @@ class HexGUI():
             if event.key == 'escape':
                 while ghost_pieces:
                     ghost_pieces.pop().remove()
+                    ghost_piece_loc.discard(ghost_piece_loc_l.pop())
                 human_move['ghost_turn'] = self.game.turn
 
             if event.key == 'left':
                 if ghost_pieces:
                     ghost_pieces.pop().remove()
+                    ghost_piece_loc.discard(ghost_piece_loc_l.pop())
                     human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
 
         event_handler_id2 = self.fig.canvas.mpl_connect('key_press_event', on_key_press)
