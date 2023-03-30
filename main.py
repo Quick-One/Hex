@@ -73,6 +73,7 @@ def play_game(player_1: player, player_2: player):
 
 def main():
     HexGUI.start_game(Hex(BOARD_SIZE))
+    input('Press enter to exit')
 
 if __name__ == '__main__':
     # menu()

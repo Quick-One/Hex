@@ -87,23 +87,19 @@ class HexGUI():
                     curr_player = self.game.current_player
                     log.info(f'Move on {move_to_string(move)} registered for {curr_player}.')
         
-        # def on_key_press(event):
-        #     if event.key == 'escape':
-        #         while ghost_pieces:
-        #             ghost_pieces.pop().remove()
-        #         self.refresh()
-        #         human_move['ghost_turn'] = self.game.turn
+        def on_key_press(event):
+            if event.key == 'escape':
+                while ghost_pieces:
+                    ghost_pieces.pop().remove()
+                human_move['ghost_turn'] = self.game.turn
 
-        #     if event.key == 'left':
-        #         if ghost_pieces:
-        #             ghost_pieces.pop().remove()
-        #             human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
-        #             self.refresh()
+            if event.key == 'left':
+                if ghost_pieces:
+                    ghost_pieces.pop().remove()
+                    human_move['ghost_turn'] = opponent(human_move['ghost_turn'])
 
-        # event_handler_id2 = self.fig.canvas.mpl_connect('key_press_event', on_key_press)
+        event_handler_id2 = self.fig.canvas.mpl_connect('key_press_event', on_key_press)
         event_handler_id = self.fig.canvas.mpl_connect('button_press_event', getmove_onclick)
-        print(event_handler_id)
-        # print(event_handler_id2)
         while human_move['Found_valid_move'] == False:
             plt.pause(0.1)
         while ghost_pieces:

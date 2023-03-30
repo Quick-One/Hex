@@ -27,27 +27,27 @@
         "radius": 1,
         "facecolor": "1",
         "edgecolor": "k",
-        "linewidth": "1.5",
+        "linewidth": 1.5,
         "orientation": 0.5235987755982988
     },
     "P1_piece": {
         "radius": 0.6,
         "facecolor": "red",
         "edgecolor": "k",
-        "linewidth": "2"
+        "linewidth": 2
     },
     "P2_piece": {
         "radius": 0.6,
         "facecolor": "blue",
         "edgecolor": "k",
-        "linewidth": "2"
+        "linewidth": 2
     },
     "highlightedTile": {
         "radius": 1,
         "numVertices": 6,
         "facecolor": "none",
         "edgecolor": "lime",
-        "linewidth": "4",
+        "linewidth": 4,
         "orientation": 0.5235987755982988
     },
     "P1MoveNo": {
